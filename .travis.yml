@@ -14,11 +14,11 @@ script:
   - goveralls -coverprofile=cover.out -service=travis-ci
   - golangci-lint run
 
-  - CGO_ENABLED=0 GOARCH=386 GOOS=linux go build cmd/main.go -o out/gohil_linux_i686 .
-  - CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build cmd/main.go -o out/gohil_linux_x86-64 .
-  - GOARCH=amd64 GOOS=darwin go build cmd/main.go -o out/gohil_osx .
-  - GOARCH=386 GOOS=windows go build cmd/main.go -o out/gohil_win32.exe .
-  - GOARCH=amd64 GOOS=windows go build cmd/main.go -o out/gohil_win64.exe .
+  - CGO_ENABLED=0 GOARCH=386 GOOS=linux go build -o out/gohil_linux_i686 cmd/main.go .
+  - CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o out/gohil_linux_x86-64 cmd/main.go  .
+  - GOARCH=amd64 GOOS=darwin go build -o out/gohil_osx cmd/main.go
+  - GOARCH=386 GOOS=windows go build -o out/gohil_win32.exe cmd/main.go
+  - GOARCH=amd64 GOOS=windows go build -o out/gohil_win64.exe cmd/main.go
 
 deploy:
   provider: releases
