@@ -17,5 +17,4 @@ func main() {
 	log := logger.GetFromContext(ctx)
 	log.Infof("Starting gohil...")
 	log.Infof("Terminating gohil...")
-	return
 }
