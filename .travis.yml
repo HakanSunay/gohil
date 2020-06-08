@@ -1,0 +1,29 @@
+language: go
+
+go:
+  - 1.13.x
+
+install:
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.23.6
+
+script:
+  - go test ./... -v -covermode=count -coverprofile=coverage.out
+  - cat coverage.out | grep -v "main.go" > cover.out
+  - goveralls -coverprofile=cover.out -service=travis-ci
+  - golangci-lint run
+
+  - CGO_ENABLED=0 GOARCH=386 GOOS=linux go build cmd/main.go -o out/gohil_linux_i686 .
+  - CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build cmd/main.go -o out/gohil_linux_x86-64 .
+  - GOARCH=amd64 GOOS=darwin go build cmd/main.go -o out/gohil_osx .
+  - GOARCH=386 GOOS=windows go build cmd/main.go -o out/gohil_win32.exe .
+  - GOARCH=amd64 GOOS=windows go build cmd/main.go -o out/gohil_win64.exe .
+
+deploy:
+  provider: releases
+  file_glob: true
+  file: out/*
+  skip_cleanup: true
+  on:
+    tags: true
