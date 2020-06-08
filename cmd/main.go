@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"gohil/logger"
+	"github.com/HakanSunay/gohil/logger"
 )
 
 var ctx = context.Background()

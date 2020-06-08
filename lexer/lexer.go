@@ -3,7 +3,7 @@ package lexer
 import (
 	"unicode"
 
-	"gohil/token"
+	"github.com/HakanSunay/gohil/token"
 )
 
 // Lexer is used for lexing the input, which results in producing tokens
