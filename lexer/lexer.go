@@ -162,6 +162,7 @@ func (l *Lexer) readNumber() string {
 	return l.input[startIndex:l.currentIndex]
 }
 
+// isLetter checks if the given character byte is an ASCII letter.
 func isLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z'
 }
