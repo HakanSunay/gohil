@@ -189,7 +189,7 @@ func TestLexerNextToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		l := New(tt.inputString)
+		l := NewLexer(tt.inputString)
 		for _, tv := range tt.tokenValues {
 			tok := l.NextToken()
 			if tok.Type != tv.expectedTokenType {

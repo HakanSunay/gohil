@@ -20,8 +20,8 @@ type Lexer struct {
 	nextIndex    int
 }
 
-// New initializes a new lexer type
-func New(input string) *Lexer {
+// NewLexer initializes a new lexer type
+func NewLexer(input string) *Lexer {
 	l := &Lexer{input: input}
 
 	// this will initialize the fields of the lexer
