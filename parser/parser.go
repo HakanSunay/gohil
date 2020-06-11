@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+
 	"github.com/HakanSunay/gohil/lexer"
 	"github.com/HakanSunay/gohil/syntaxtree"
 	"github.com/HakanSunay/gohil/token"
@@ -24,7 +25,7 @@ type Parser struct {
 
 // NewParser is the constructor for the Parser type
 func NewParser(lxr *lexer.Lexer) *Parser {
-	parser := &Parser{lxr:lxr, errors: []string{}}
+	parser := &Parser{lxr: lxr, errors: []string{}}
 
 	parser.currentToken = parser.nextToken
 	parser.nextToken = lxr.NextToken()
@@ -59,6 +60,7 @@ func (p *Parser) ParseProgram() *syntaxtree.Program {
 	return program
 }
 
+// parseStatement handles parsing statements
 func (p *Parser) parseStatement() syntaxtree.Stmt {
 	switch p.currentToken.Type {
 	case token.Let:
@@ -68,6 +70,7 @@ func (p *Parser) parseStatement() syntaxtree.Stmt {
 	}
 }
 
+// parseLetStatement takes care of parsing let statements
 func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 	stmt := &syntaxtree.LetStmt{Token: p.currentToken}
 
@@ -104,11 +107,14 @@ func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 	return stmt
 }
 
+// TODO: logging
+// generateErrorMsg generated error message for unexpected token retrieval
 func generateErrorMsg(cur token.Type, exp token.Type, actual token.Type) string {
 	return fmt.Sprintf("current token (%s) expected next token to be (%s), but got (%s)",
 		cur, exp, actual)
 }
 
+// GetErrors returns the encountered errors of the parser
 func (p *Parser) GetErrors() []string {
 	return p.errors
 }
