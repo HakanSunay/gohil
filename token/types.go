@@ -5,6 +5,10 @@ package token
 // but in the ideal case scenario int or byte should be used for performance.
 type Type string
 
+func (t Type) String() string {
+	return string(t)
+}
+
 const (
 	// Illegal is used to identify illegal (unknown) token types
 	Illegal = Type("Illegal")

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/HakanSunay/gohil/lexer"
 	"github.com/HakanSunay/gohil/syntaxtree"
 	"github.com/HakanSunay/gohil/token"
@@ -17,11 +18,13 @@ type Parser struct {
 
 	currentToken token.Token
 	nextToken    token.Token
+
+	errors []string
 }
 
 // NewParser is the constructor for the Parser type
 func NewParser(lxr *lexer.Lexer) *Parser {
-	parser := &Parser{lxr:lxr}
+	parser := &Parser{lxr:lxr, errors: []string{}}
 
 	parser.currentToken = parser.nextToken
 	parser.nextToken = lxr.NextToken()
@@ -70,6 +73,8 @@ func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 
 	// if the next token is not an identifier, this is an invalid let statement
 	if p.nextToken.Type != token.Identifier {
+		msg := generateErrorMsg(p.currentToken.Type, token.Identifier, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 
@@ -84,6 +89,7 @@ func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 	// currently, we have let identifier
 	// if the next token is not an equal assign, this is an invalid let statement
 	if p.nextToken.Type != token.Assign {
+
 		return nil
 	}
 
@@ -96,4 +102,13 @@ func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 	}
 
 	return stmt
+}
+
+func generateErrorMsg(cur token.Type, exp token.Type, actual token.Type) string {
+	return fmt.Sprintf("current token (%s) expected next token to be (%s), but got (%s)",
+		cur, exp, actual)
+}
+
+func (p *Parser) GetErrors() []string {
+	return p.errors
 }
