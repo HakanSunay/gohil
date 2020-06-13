@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -154,4 +155,66 @@ func TestParseIntegerLiteralExpression(t *testing.T) {
 		t.Errorf("expected token literal 6, but got %v",
 			literal.GetTokenLiteral())
 	}
+}
+
+func TestParsingPrefixExpressions(t *testing.T) {
+	prefixTests := []struct {
+		input string
+		operator string
+		integerValue int
+	}{
+		{"!6;", "!", 6},
+		{"-66;", "-", 66},
+	}
+	for _, tt := range prefixTests {
+		l := lexer.NewLexer(tt.input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		if len(program.Statements) != 1 {
+			t.Fatalf("expected len 1, but got: %d", len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+		if !ok {
+			t.Fatalf("type asserting to ExpressionStmt failed, got :%v",
+				reflect.TypeOf(program.Statements[0]))
+		}
+
+		exp, ok := stmt.Expression.(*syntaxtree.PrefixExpr)
+		if !ok {
+			t.Fatalf("type asserting to PrefixExpr failed, got :%v",
+				reflect.TypeOf(stmt.Expression))
+		}
+
+		if exp.Operator != tt.operator {
+			t.Fatalf("expected operator: %s, but got %s",
+				tt.operator, exp.Operator)
+		}
+
+		if !testIntegerLiteral(t, exp.Right, tt.integerValue) {
+			return
+		}
+	}
+}
+
+func testIntegerLiteral(t *testing.T, il syntaxtree.Expr, value int) bool {
+	integer, ok := il.(*syntaxtree.IntegerLiteral)
+	if !ok {
+		t.Errorf("unable to type assert to IntegerLiteral, got %v",
+			reflect.TypeOf(il))
+		return false
+	}
+
+	if integer.Value != value {
+		t.Errorf("expected %d, but got %d", value, integer.Value)
+		return false
+	}
+
+	if integer.GetTokenLiteral() != fmt.Sprintf("%d", value) {
+		t.Errorf("expected %v, but got %v", value,
+			integer.GetTokenLiteral())
+		return false
+	}
+
+	return true
 }

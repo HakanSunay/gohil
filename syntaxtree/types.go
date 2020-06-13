@@ -22,7 +22,7 @@ type Stmt interface {
 // Expressions produce values. E.g: 6; sum(6,6)
 type Expr interface {
 	Node
-	// expressionNode() ensures that only expression/type nodes can be
+	// exprNode() ensures that only expression/type nodes can be
 	// assigned to an Expr.
 	exprNode()
 }
