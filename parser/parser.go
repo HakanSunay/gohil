@@ -8,6 +8,16 @@ import (
 	"github.com/HakanSunay/gohil/token"
 )
 
+// parserFunc types are used for Pratt parsing
+// only the infixParseFN takes an argument,
+// because that is the left side of the operator that is being parsed
+// E.g: 6 + _ (+ is the operator and 6 is the argument)
+// prefixParseFN doesn't have a left side for its operator
+type (
+	prefixParseFN func() syntaxtree.Expr
+	infixParseFN  func(syntaxtree.Expr) syntaxtree.Expr
+)
+
 // Parser repeatedly calls lexer's NextToken to apply logic onto it.
 // We need the current and the next token for every evaluation,
 // because future knowledge is crucial during evaluation.
@@ -20,12 +30,22 @@ type Parser struct {
 	currentToken token.Token
 	nextToken    token.Token
 
+	prefixMap map[token.Type]prefixParseFN
+	infixMap  map[token.Type]infixParseFN
+
 	errors []string
 }
 
 // NewParser is the constructor for the Parser type
 func NewParser(lxr *lexer.Lexer) *Parser {
-	parser := &Parser{lxr: lxr, errors: []string{}}
+	parser := &Parser{
+		lxr: lxr,
+
+		prefixMap: make(map[token.Type]prefixParseFN),
+		infixMap:  make(map[token.Type]infixParseFN),
+
+		errors: []string{},
+	}
 
 	parser.currentToken = parser.nextToken
 	parser.nextToken = lxr.NextToken()
@@ -135,4 +155,12 @@ func (p *Parser) parseReturnStatement() *syntaxtree.ReturnStmt {
 	}
 
 	return stmt
+}
+
+func (p *Parser) addPrefixFunc(tokenType token.Type, fn prefixParseFN) {
+	p.prefixMap[tokenType] = fn
+}
+
+func (p *Parser) addInfixFunc(tokenType token.Type, fn infixParseFN) {
+	p.infixMap[tokenType] = fn
 }
