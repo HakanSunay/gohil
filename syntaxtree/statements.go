@@ -18,3 +18,16 @@ type LetStmt struct {
 func (l *LetStmt) GetTokenLiteral() string {return l.Token.Literal }
 
 func (l *LetStmt) stmtNode() {}
+
+// ReturnStmt defines a return statement.
+// E.g: return 6; return keyword and expression.
+// This means that we need a token that identifies this statement - token.Return.
+// We also need a return value - 6, which is an expression.
+type ReturnStmt struct {
+	Token token.Token
+	ReturnValue Expr // return expression
+}
+
+func (r *ReturnStmt) GetTokenLiteral() string {return r.Token.Literal }
+
+func (r *ReturnStmt) stmtNode() {}

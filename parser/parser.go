@@ -65,6 +65,8 @@ func (p *Parser) parseStatement() syntaxtree.Stmt {
 	switch p.currentToken.Type {
 	case token.Let:
 		return p.parseLetStatement()
+	case token.Return:
+		return p.parseReturnStatement()
 	default:
 		return nil
 	}
@@ -92,7 +94,8 @@ func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 	// currently, we have let identifier
 	// if the next token is not an equal assign, this is an invalid let statement
 	if p.nextToken.Type != token.Assign {
-
+		msg := generateErrorMsg(p.currentToken.Type, token.Assign, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 
@@ -117,4 +120,19 @@ func generateErrorMsg(cur token.Type, exp token.Type, actual token.Type) string 
 // GetErrors returns the encountered errors of the parser
 func (p *Parser) GetErrors() []string {
 	return p.errors
+}
+
+func (p *Parser) parseReturnStatement() *syntaxtree.ReturnStmt {
+	stmt := &syntaxtree.ReturnStmt{Token: p.currentToken}
+
+	// let's move to the next token - the expression
+	p.jump()
+
+	// TODO: handle expression parsing to ReturnValue
+
+	for p.currentToken.Type != token.SemiColon {
+		p.jump()
+	}
+
+	return stmt
 }
