@@ -269,3 +269,74 @@ func testIntegerLiteral(t *testing.T, il syntaxtree.Expr, value int) bool {
 
 	return true
 }
+
+func TestOperatorPrecedenceParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"-x * y",
+			"((-x) * y)",
+		},
+		{
+			"!-x",
+			"(!(-x))",
+		},
+		{
+			"x + y + z",
+			"((x + y) + z)",
+		},
+		{
+			"x + y - z",
+			"((x + y) - z)",
+		},
+		{
+			"x * y * z",
+			"((x * y) * z)",
+		},
+		{
+			"x * y / z",
+			"((x * y) / z)",
+		},
+		{
+			"x + y / z",
+			"(x + (y / z))",
+		},
+		{
+			"x + y * z + d / e - f",
+			"(((x + (y * z)) + (d / e)) - f)",
+		},
+		{
+			"3 + 4; -5 * 5",
+			"(3 + 4)((-5) * 5)",
+		},
+		{
+			"5 > 4 == 3 < 4",
+			"((5 > 4) == (3 < 4))",
+		},
+		{
+			"5 < 4 != 3 > 4",
+			"((5 < 4) != (3 > 4))",
+		},
+		{
+			"3 + 4 * 5 == 3 * 1 + 4 * 5",
+			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+		},
+		{
+			"3 + 4 * 5 == 3 * 1 + 4 * 5",
+			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		// String will wrap the literals in parentheses
+		actual := program.String()
+		if actual != tt.expected {
+			t.Errorf("expected %s, but got %s", tt.expected, actual)
+		}
+	}
+}
