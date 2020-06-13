@@ -37,11 +37,11 @@ func (l *Lexer) nextChar() {
 	if l.nextIndex >= len(l.input) {
 		// ASCII for NUL
 		l.currentChar = 0
-		return
+	} else {
+		l.currentChar = l.input[l.nextIndex]
 	}
 
 	// read next char and update field values
-	l.currentChar = l.input[l.nextIndex]
 	l.currentIndex = l.nextIndex
 	l.nextIndex++
 }
