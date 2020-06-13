@@ -64,6 +64,8 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	// register the available parsing functions
 	parser.addPrefixFunc(token.Identifier, parser.parseIdentifier)
 	parser.addPrefixFunc(token.Int, parser.parseIntegerLiteral)
+	parser.addPrefixFunc(token.ExclamationMark, parser.parsePrefixExpression)
+	parser.addPrefixFunc(token.Minus, parser.parsePrefixExpression)
 
 	return parser
 }
@@ -223,4 +225,23 @@ func (p *Parser) parseIntegerLiteral() syntaxtree.Expr {
 
 	integerLiteral.Value = value
 	return integerLiteral
+}
+
+func (p *Parser) parsePrefixExpression() syntaxtree.Expr {
+	// imagine getting !66 as parameter
+	// ! becomes the current expression and its token is !
+	expression := &syntaxtree.PrefixExpr{
+		Token: p.currentToken,
+		Operator: p.currentToken.Literal,
+	}
+
+	// moving to the next token
+	p.jump()
+
+	// now assigning 66 integerLiteral to the right side
+	// of the current expression recursively
+	// second highest operator precedence, after func calls
+	expression.Right = p.parseExpression(Prefix)
+
+	return expression
 }
