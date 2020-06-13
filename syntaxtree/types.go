@@ -1,7 +1,11 @@
 package syntaxtree
 
+import "fmt"
+
 // Node is an interface that must be implemented by every node in the tree
 type Node interface {
+	fmt.Stringer
+
 	GetTokenLiteral() string
 }
 
@@ -22,4 +26,3 @@ type Expr interface {
 	// assigned to an Expr.
 	exprNode()
 }
-

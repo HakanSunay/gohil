@@ -10,9 +10,14 @@ type Identifier struct {
 	Value string
 }
 
-func (i *Identifier) GetTokenLiteral() string { return i.Token.Literal }
+func (i *Identifier) GetTokenLiteral() string {
+	return i.Token.Literal
+}
 
 // identifier doesn't produce values, why is it implementing the Expr iface?
 // we will have functions that produce values, which will be assigned to identifiers.
 func (i *Identifier) exprNode() {}
 
+func (i *Identifier) String() string {
+	return i.Value
+}
