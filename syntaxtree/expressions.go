@@ -70,3 +70,42 @@ func (p *PrefixExpr) String() string {
 }
 
 func (p *PrefixExpr) exprNode() {}
+
+// InfixExpr describes infix expressions.
+// There are many infix expressions supported by gohil.
+// All of the arithmetic operations are considered infix expressions.
+// E.g: 6 + 8
+// Should result in:
+// Token: +
+// Left: IntegerLiteral(6)
+// Operator: +
+// Right: IntegerLiteral(8)
+type InfixExpr struct {
+	Token token.Token
+
+	Left     Expr
+	Operator string
+	Right    Expr
+}
+
+func (i *InfixExpr) GetTokenLiteral() string {
+	return i.Token.Literal
+}
+
+func (i *InfixExpr) String() string {
+	var builder strings.Builder
+
+	builder.WriteString("(")
+	builder.WriteString(i.Left.String())
+
+	builder.WriteString(" ")
+	builder.WriteString(i.Operator)
+	builder.WriteString(" ")
+
+	builder.WriteString(i.Right.String())
+	builder.WriteString(")")
+
+	return builder.String()
+}
+
+func (i *InfixExpr) exprNode() {}
