@@ -159,8 +159,8 @@ func TestParseIntegerLiteralExpression(t *testing.T) {
 
 func TestParsingPrefixExpressions(t *testing.T) {
 	prefixTests := []struct {
-		input string
-		operator string
+		input        string
+		operator     string
 		integerValue int
 	}{
 		{"!6;", "!", 6},
@@ -192,6 +192,57 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		}
 
 		if !testIntegerLiteral(t, exp.Right, tt.integerValue) {
+			return
+		}
+	}
+}
+
+func TestParsingInfixExpressions(t *testing.T) {
+	infixTests := []struct {
+		input      string
+		leftValue  int
+		operator   string
+		rightValue int
+	}{
+		{"6 + 6;", 6, "+", 6},
+		{"6 - 6;", 6, "-", 6},
+		{"6 * 6;", 6, "*", 6},
+		{"6 / 6;", 6, "/", 6},
+		{"6 > 6;", 6, ">", 6},
+		{"6 < 6;", 6, "<", 6},
+		{"6 == 6;", 6, "==", 6},
+		{"6 != 6;", 6, "!=", 6},
+	}
+	for _, tt := range infixTests {
+		l := lexer.NewLexer(tt.input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		if len(program.Statements) != 1 {
+			t.Fatalf("expected len 1, but got: %d", len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+		if !ok {
+			t.Fatalf("type asserting to ExpressionStmt failed, got :%v",
+				reflect.TypeOf(program.Statements[0]))
+		}
+
+		exp, ok := stmt.Expression.(*syntaxtree.InfixExpr)
+		if !ok {
+			t.Fatalf("type asserting to InfixExpr failed, got :%v",
+				reflect.TypeOf(stmt.Expression))
+		}
+
+		if !testIntegerLiteral(t, exp.Left, tt.leftValue) {
+			return
+		}
+
+		if exp.Operator != tt.operator {
+			t.Fatalf("expected %s, but got: %s",
+				tt.operator, exp.Operator)
+		}
+
+		if !testIntegerLiteral(t, exp.Right, tt.rightValue) {
 			return
 		}
 	}
