@@ -199,6 +199,9 @@ func (p *Parser) parseExpression(precedence int) syntaxtree.Expr {
 	// is there a parsing function that can handle the current token type
 	prefix, ok := p.prefixMap[p.currentToken.Type]
 	if !ok {
+		msg := fmt.Sprintf("no prefix parse function for (%s) found",
+			p.currentToken.Type)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 	leftExpr := prefix()
