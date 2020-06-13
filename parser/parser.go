@@ -2,22 +2,37 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/HakanSunay/gohil/lexer"
 	"github.com/HakanSunay/gohil/syntaxtree"
 	"github.com/HakanSunay/gohil/token"
+	"strconv"
 )
 
 const (
-	Lowest      = iota + 1
-	Equals      // ==
-	LessGreater // > or <
-	Sum         // +
-	Product     // *
-	Prefix      // -X or !X
-	Call        // myFunction(X)
+	Lowest = iota + 1
+	Equals
+	LessGreater
+	Sum
+	Product
+	Prefix
+	Call
 )
+
+var precedences = map[token.Type]int{
+	token.Equal:    Equals,
+	token.NotEqual: Equals,
+
+	token.LessThan:    LessGreater,
+	token.GreaterThan: LessGreater,
+
+	token.Plus:  Sum,
+	token.Minus: Sum,
+
+	token.Slash:    Product,
+	token.Asterisk: Product,
+
+	token.Function: Call,
+}
 
 // parserFunc types are used for Pratt parsing
 // only the infixParseFN takes an argument,
@@ -62,10 +77,22 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.jump()
 
 	// register the available parsing functions
+
+	// prefix funcs
 	parser.addPrefixFunc(token.Identifier, parser.parseIdentifier)
 	parser.addPrefixFunc(token.Int, parser.parseIntegerLiteral)
 	parser.addPrefixFunc(token.ExclamationMark, parser.parsePrefixExpression)
 	parser.addPrefixFunc(token.Minus, parser.parsePrefixExpression)
+
+	// infix funcs
+	parser.addInfixFunc(token.Plus, parser.parseInfixExpression)
+	parser.addInfixFunc(token.Minus, parser.parseInfixExpression)
+	parser.addInfixFunc(token.Slash, parser.parseInfixExpression)
+	parser.addInfixFunc(token.Asterisk, parser.parseInfixExpression)
+	parser.addInfixFunc(token.Equal, parser.parseInfixExpression)
+	parser.addInfixFunc(token.NotEqual, parser.parseInfixExpression)
+	parser.addInfixFunc(token.LessThan, parser.parseInfixExpression)
+	parser.addInfixFunc(token.GreaterThan, parser.parseInfixExpression)
 
 	return parser
 }
@@ -207,6 +234,22 @@ func (p *Parser) parseExpression(precedence int) syntaxtree.Expr {
 		return nil
 	}
 	leftExpr := prefix()
+
+	for p.nextToken.Type != token.SemiColon && precedence < p.getNextPrecedence() {
+		infix, ok := p.infixMap[p.nextToken.Type]
+		if !ok {
+			msg := fmt.Sprintf("no infix parse function for (%s) found",
+				p.nextToken.Type)
+			p.errors = append(p.errors, msg)
+			return leftExpr
+		}
+
+		p.jump()
+
+		// the infix takes the left expr as a parameter and updates it
+		leftExpr = infix(leftExpr)
+	}
+
 	return leftExpr
 }
 
@@ -231,7 +274,7 @@ func (p *Parser) parsePrefixExpression() syntaxtree.Expr {
 	// imagine getting !66 as parameter
 	// ! becomes the current expression and its token is !
 	expression := &syntaxtree.PrefixExpr{
-		Token: p.currentToken,
+		Token:    p.currentToken,
 		Operator: p.currentToken.Literal,
 	}
 
@@ -244,4 +287,36 @@ func (p *Parser) parsePrefixExpression() syntaxtree.Expr {
 	expression.Right = p.parseExpression(Prefix)
 
 	return expression
+}
+
+func (p *Parser) getCurrentPrecedence() int {
+	val, ok := precedences[p.currentToken.Type]
+	if !ok {
+		return Lowest
+	}
+
+	return val
+}
+
+func (p *Parser) getNextPrecedence() int {
+	val, ok := precedences[p.nextToken.Type]
+	if !ok {
+		return Lowest
+	}
+
+	return val
+}
+
+func (p *Parser) parseInfixExpression(leftExpr syntaxtree.Expr) syntaxtree.Expr {
+	expr := &syntaxtree.InfixExpr{
+		Token:    p.currentToken,
+		Left:     leftExpr,
+		Operator: p.currentToken.Literal,
+	}
+
+	precedence := p.getCurrentPrecedence()
+	p.jump()
+	expr.Right = p.parseExpression(precedence)
+
+	return expr
 }
