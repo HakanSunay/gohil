@@ -54,3 +54,5 @@ let foobar = 888;
 		}
 	}
 }
+
+// TODO: all tests for parsing return statements
