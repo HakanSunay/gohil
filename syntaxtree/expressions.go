@@ -21,3 +21,18 @@ func (i *Identifier) exprNode() {}
 func (i *Identifier) String() string {
 	return i.Value
 }
+
+type IntegerLiteral struct {
+	Token token.Token
+	Value int
+}
+
+func (il *IntegerLiteral) exprNode() {}
+
+func (il *IntegerLiteral) GetTokenLiteral() string {
+	return il.Token.Literal
+}
+
+func (il *IntegerLiteral) String() string {
+	return il.Token.Literal
+}

@@ -1,6 +1,8 @@
 package syntaxtree
 
-import "strings"
+import (
+	"strings"
+)
 
 type Program struct {
 	Statements []Stmt

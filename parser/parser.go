@@ -2,10 +2,21 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/HakanSunay/gohil/lexer"
 	"github.com/HakanSunay/gohil/syntaxtree"
 	"github.com/HakanSunay/gohil/token"
+)
+
+const (
+	Lowest      = iota + 1
+	Equals      // ==
+	LessGreater // > or <
+	Sum         // +
+	Product     // *
+	Prefix      // -X or !X
+	Call        // myFunction(X)
 )
 
 // parserFunc types are used for Pratt parsing
@@ -47,8 +58,12 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 		errors: []string{},
 	}
 
-	parser.currentToken = parser.nextToken
-	parser.nextToken = lxr.NextToken()
+	parser.jump()
+	parser.jump()
+
+	// register the available parsing functions
+	parser.addPrefixFunc(token.Identifier, parser.parseIdentifier)
+	parser.addPrefixFunc(token.Int, parser.parseIntegerLiteral)
 
 	return parser
 }
@@ -88,7 +103,7 @@ func (p *Parser) parseStatement() syntaxtree.Stmt {
 	case token.Return:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
 
@@ -163,4 +178,46 @@ func (p *Parser) addPrefixFunc(tokenType token.Type, fn prefixParseFN) {
 
 func (p *Parser) addInfixFunc(tokenType token.Type, fn infixParseFN) {
 	p.infixMap[tokenType] = fn
+}
+
+func (p *Parser) parseExpressionStatement() *syntaxtree.ExpressionStmt {
+	stmt := &syntaxtree.ExpressionStmt{Token: p.currentToken}
+
+	stmt.Expression = p.parseExpression(Lowest)
+
+	// 6;
+	// 6
+	// are both valid in gohil
+	if p.nextToken.Type == token.SemiColon {
+		p.jump()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) syntaxtree.Expr {
+	// is there a parsing function that can handle the current token type
+	prefix, ok := p.prefixMap[p.currentToken.Type]
+	if !ok {
+		return nil
+	}
+	leftExpr := prefix()
+	return leftExpr
+}
+
+func (p *Parser) parseIdentifier() syntaxtree.Expr {
+	return &syntaxtree.Identifier{Token: p.currentToken, Value: p.currentToken.Literal}
+}
+
+func (p *Parser) parseIntegerLiteral() syntaxtree.Expr {
+	integerLiteral := &syntaxtree.IntegerLiteral{Token: p.currentToken}
+	value, err := strconv.Atoi(p.currentToken.Literal)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse (%s) to integer", p.currentToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	integerLiteral.Value = value
+	return integerLiteral
 }
