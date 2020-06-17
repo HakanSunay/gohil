@@ -81,6 +81,8 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	// prefix funcs
 	parser.addPrefixFunc(token.Identifier, parser.parseIdentifier)
 	parser.addPrefixFunc(token.Int, parser.parseIntegerLiteral)
+	parser.addPrefixFunc(token.True, parser.parseBooleanLiteral)
+	parser.addPrefixFunc(token.False, parser.parseBooleanLiteral)
 	parser.addPrefixFunc(token.ExclamationMark, parser.parsePrefixExpression)
 	parser.addPrefixFunc(token.Minus, parser.parsePrefixExpression)
 
@@ -269,6 +271,15 @@ func (p *Parser) parseIntegerLiteral() syntaxtree.Expr {
 	integerLiteral.Value = value
 	return integerLiteral
 }
+
+func (p *Parser) parseBooleanLiteral() syntaxtree.Expr {
+	return &syntaxtree.BooleanLiteral{
+		Token: p.currentToken,
+		// if the token type is True -> assigning to true; else False
+		Value: p.currentToken.Type == token.True,
+	}
+}
+
 
 func (p *Parser) parsePrefixExpression() syntaxtree.Expr {
 	// imagine getting !66 as parameter
