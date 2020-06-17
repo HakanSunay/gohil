@@ -85,6 +85,7 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.addPrefixFunc(token.False, parser.parseBooleanLiteral)
 	parser.addPrefixFunc(token.ExclamationMark, parser.parsePrefixExpression)
 	parser.addPrefixFunc(token.Minus, parser.parsePrefixExpression)
+	parser.addPrefixFunc(token.LeftParenthesis, parser.parseGroupedExpression)
 
 	// infix funcs
 	parser.addInfixFunc(token.Plus, parser.parseInfixExpression)
@@ -329,5 +330,18 @@ func (p *Parser) parseInfixExpression(leftExpr syntaxtree.Expr) syntaxtree.Expr 
 	p.jump()
 	expr.Right = p.parseExpression(precedence)
 
+	return expr
+}
+
+func (p *Parser) parseGroupedExpression() syntaxtree.Expr {
+	p.jump()
+
+	expr := p.parseExpression(Lowest)
+
+	if p.nextToken.Type != token.RightParenthesis {
+		return nil
+	}
+
+	p.jump()
 	return expr
 }
