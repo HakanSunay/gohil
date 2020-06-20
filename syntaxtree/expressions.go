@@ -1,8 +1,9 @@
 package syntaxtree
 
 import (
-	"github.com/HakanSunay/gohil/token"
 	"strings"
+
+	"github.com/HakanSunay/gohil/token"
 )
 
 // Identifier represents identifiers that are used in statements and expressions.
@@ -187,3 +188,37 @@ func (f *FunctionLiteral) GetTokenLiteral() string {
 }
 
 func (f *FunctionLiteral) exprNode() {}
+
+// CallExpr identifies a callable expression.
+// call expressions are of this structure:
+// <expression>(<comma separated expressions>)
+// sum(1, 2)
+// sum(1 + 2, 3 + 4)
+// fn(x, y) { x + y; }(1, 2)
+type CallExpr struct {
+	Token     token.Token // '(' left parenthesis
+	Function  Expr        // either an identifier or a function literal
+	Arguments []Expr
+}
+
+func (c *CallExpr) String() string {
+	var builder strings.Builder
+
+	var args []string
+	for _, a := range c.Arguments {
+		args = append(args, a.String())
+	}
+
+	builder.WriteString(c.Function.String())
+	builder.WriteString("(")
+	builder.WriteString(strings.Join(args, ", "))
+	builder.WriteString(")")
+
+	return builder.String()
+}
+
+func (c *CallExpr) GetTokenLiteral() string {
+	return c.Token.Literal
+}
+
+func (c *CallExpr) exprNode() {}

@@ -2,10 +2,11 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/HakanSunay/gohil/lexer"
 	"github.com/HakanSunay/gohil/syntaxtree"
 	"github.com/HakanSunay/gohil/token"
-	"strconv"
 )
 
 const (
@@ -31,7 +32,8 @@ var precedences = map[token.Type]int{
 	token.Slash:    Product,
 	token.Asterisk: Product,
 
-	token.Function: Call,
+	token.Function:        Call,
+	token.LeftParenthesis: Call,
 }
 
 // parserFunc types are used for Pratt parsing
@@ -98,6 +100,7 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.addInfixFunc(token.NotEqual, parser.parseInfixExpression)
 	parser.addInfixFunc(token.LessThan, parser.parseInfixExpression)
 	parser.addInfixFunc(token.GreaterThan, parser.parseInfixExpression)
+	parser.addInfixFunc(token.LeftParenthesis, parser.parseCallExpression)
 
 	return parser
 }
@@ -483,4 +486,48 @@ func (p *Parser) parseFunctionParameters() []*syntaxtree.Identifier {
 	p.jump()
 
 	return ids
+}
+
+func (p *Parser) parseCallExpression(fn syntaxtree.Expr) syntaxtree.Expr {
+	exp := &syntaxtree.CallExpr{Token: p.currentToken, Function: fn}
+	exp.Arguments = p.parseCallArguments()
+
+	return exp
+}
+
+func (p *Parser) parseCallArguments() []syntaxtree.Expr {
+	var args []syntaxtree.Expr
+
+	// no args
+	if p.nextToken.Type == token.RightParenthesis {
+		p.jump()
+		return args
+	}
+
+	// jump to first arg
+	p.jump()
+
+	// since every argument is an expression, lets parse the first one
+	args = append(args, p.parseExpression(Lowest))
+
+	// similar to parsing function parameters
+	// while there is an argument left, keep on parsing them
+	for p.nextToken.Type == token.Comma {
+		// jump to the comma
+		p.jump()
+		// jump to the arg
+		p.jump()
+		args = append(args, p.parseExpression(Lowest))
+	}
+
+	// no more comma, the next token must be a right parenthesis
+	if p.nextToken.Type != token.RightParenthesis {
+		msg := generateErrorMsg(p.currentToken.Type, token.RightParenthesis, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	// jump to the right parenthesis
+	p.jump()
+
+	return args
 }

@@ -2,13 +2,15 @@ package parser
 
 import (
 	"fmt"
-	"github.com/HakanSunay/gohil/token"
 	"reflect"
 	"testing"
 
 	"github.com/HakanSunay/gohil/lexer"
 	"github.com/HakanSunay/gohil/syntaxtree"
+	"github.com/HakanSunay/gohil/token"
 )
+
+// TODO: try to apply DRY to test cases
 
 func TestLetStatements(t *testing.T) {
 	input := `
@@ -471,5 +473,74 @@ func TestFunctionParameterParsing(t *testing.T) {
 				t.Errorf("expected %v, but got %v", ident, id.GetTokenLiteral())
 			}
 		}
+	}
+}
+
+func TestCallExpressionParsing(t *testing.T) {
+	input := "add(1, 2 * 3, 4 + 5);"
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("expected statement len %d, but got %d", 1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	if !ok {
+		t.Fatalf("stmt is not syntaxtree.ExpressionStatement. got=%T",
+			program.Statements[0])
+	}
+
+	exp, ok := stmt.Expression.(*syntaxtree.CallExpr)
+	if !ok {
+		t.Fatalf("stmt.Expression is not syntaxtree.CallExpression. got=%T",
+			stmt.Expression)
+	}
+
+	if exp.Function.GetTokenLiteral() != "add" {
+		t.Errorf("expected token literal %v, but got %v", "add", exp.Function.GetTokenLiteral())
+	}
+
+	if len(exp.Arguments) != 3 {
+		t.Fatalf("expected length of arguments %d, but got=%d", 3, len(exp.Arguments))
+	}
+
+	if exp.Arguments[0].String() != "1" {
+		t.Errorf("expected 1, but got %v", exp.Arguments[0].String())
+	}
+
+	firstExpr, ok := exp.Arguments[1].(*syntaxtree.InfixExpr)
+	if !ok {
+		t.Fatalf("unable to type assert to InfixExpr, got %T", exp.Arguments[1])
+	}
+
+	if firstExpr.Left.String() != "2" {
+		t.Errorf("expected 2, but got %v", firstExpr.Left.String())
+	}
+
+	if firstExpr.Operator != "*" {
+		t.Errorf("expected *, but got %v", firstExpr.Operator)
+	}
+
+	if firstExpr.Right.String() != "3" {
+		t.Errorf("expected 3, but got %v", firstExpr.Right.String())
+	}
+
+	secondExpr, ok := exp.Arguments[2].(*syntaxtree.InfixExpr)
+	if !ok {
+		t.Fatalf("unable to type assert to InfixExpr, got %T", exp.Arguments[2])
+	}
+
+	if secondExpr.Left.String() != "4" {
+		t.Errorf("expected 4, but got %v", secondExpr.Left.String())
+	}
+
+	if secondExpr.Operator != "+" {
+		t.Errorf("expected +, but got %v", secondExpr.Operator)
+	}
+
+	if secondExpr.Right.String() != "5" {
+		t.Errorf("expected 5, but got %v", secondExpr.Right.String())
 	}
 }
