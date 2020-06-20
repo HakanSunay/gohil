@@ -126,8 +126,8 @@ func (i *InfixExpr) String() string {
 func (i *InfixExpr) exprNode() {}
 
 type IfExpr struct {
-	Token token.Token // if
-	Condition Expr
+	Token       token.Token // if
+	Condition   Expr
 	Consequence *BlockStmt
 	Alternative *BlockStmt
 }
@@ -153,3 +153,37 @@ func (ie *IfExpr) String() string {
 }
 
 func (ie *IfExpr) exprNode() {}
+
+type FunctionLiteral struct {
+	Token      token.Token
+	Parameters []*Identifier
+	Body       *BlockStmt // reminder: 1 block statement has many statements
+}
+
+func (f *FunctionLiteral) String() string {
+	var builder strings.Builder
+
+	var params []string
+	for _, p := range f.Parameters {
+		params = append(params, p.String())
+	}
+
+	// fn
+	builder.WriteString(f.GetTokenLiteral())
+
+	// params (x, y, z)
+	builder.WriteString("(")
+	builder.WriteString(strings.Join(params, ", "))
+	builder.WriteString(") ")
+
+	// function body
+	builder.WriteString(f.Body.String())
+
+	return builder.String()
+}
+
+func (f *FunctionLiteral) GetTokenLiteral() string {
+	return f.Token.Literal
+}
+
+func (f *FunctionLiteral) exprNode() {}

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"github.com/HakanSunay/gohil/token"
 	"reflect"
 	"testing"
 
@@ -395,5 +396,80 @@ func TestIfExpression(t *testing.T) {
 
 	if exp.Alternative != nil {
 		t.Errorf("expected else alternative to be nil, but got %v", exp.Alternative.String())
+	}
+}
+
+func TestFunctionLiteral(t *testing.T) {
+	input := `fn(x, y, z) { x + y + z; }`
+
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("expected len (%d), but got %d", 1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	if !ok {
+		t.Fatalf("type asserting to ExpressionsStmt failed, got %T", program.Statements[0])
+	}
+
+	fn, ok := stmt.Expression.(*syntaxtree.FunctionLiteral)
+	if !ok {
+		t.Fatalf("type asserting to FunctionLiteral failed, got %T", stmt.Expression)
+	}
+
+	if fn.Token.Type != token.Function {
+		t.Errorf("expected %v, but got %v", token.Function, fn.Token.Type)
+	}
+
+	if fn.Parameters[0].GetTokenLiteral() != "x" {
+		t.Errorf("expected x as first parameter literal, but got %v", fn.Parameters[0].GetTokenLiteral())
+	}
+
+	if fn.Parameters[1].GetTokenLiteral() != "y" {
+		t.Errorf("expected y as second parameter literal, but got %v", fn.Parameters[1].GetTokenLiteral())
+	}
+
+	if fn.Parameters[2].GetTokenLiteral() != "z" {
+		t.Errorf("expected z as first parameter literal, but got %v", fn.Parameters[2].GetTokenLiteral())
+	}
+
+	if len(fn.Body.Statements) != 1 {
+		t.Errorf("expected 1 statement, got %d", len(fn.Body.Statements))
+	}
+
+	// we know that infix parsing operations are enclosed from right to left,
+	// when they have the same precedence
+	if fn.Body.String() != "((x + y) + z)" {
+		t.Errorf("expected ((x + y) + z), but got %v", fn.Body.String())
+	}
+}
+
+func TestFunctionParameterParsing(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedParams []string
+	}{
+		{input: "fn() {};", expectedParams: []string{}},
+		{input: "fn(x) {};", expectedParams: []string{"x"}},
+		{input: "fn(x, y, z) {};", expectedParams: []string{"x", "y", "z"}},
+	}
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		stmt := program.Statements[0].(*syntaxtree.ExpressionStmt)
+		function := stmt.Expression.(*syntaxtree.FunctionLiteral)
+		if len(function.Parameters) != len(tt.expectedParams) {
+			t.Errorf("expected len %d, but got %d", len(tt.expectedParams), len(function.Parameters))
+		}
+		for i, ident := range tt.expectedParams {
+			id := function.Parameters[i]
+			if id.GetTokenLiteral() != ident {
+				t.Errorf("expected %v, but got %v", ident, id.GetTokenLiteral())
+			}
+		}
 	}
 }

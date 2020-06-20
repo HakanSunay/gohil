@@ -87,6 +87,7 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.addPrefixFunc(token.Minus, parser.parsePrefixExpression)
 	parser.addPrefixFunc(token.LeftParenthesis, parser.parseGroupedExpression)
 	parser.addPrefixFunc(token.If, parser.parseIfExpression)
+	parser.addPrefixFunc(token.Function, parser.parseFunctionLiteral)
 
 	// infix funcs
 	parser.addInfixFunc(token.Plus, parser.parseInfixExpression)
@@ -282,7 +283,6 @@ func (p *Parser) parseBooleanLiteral() syntaxtree.Expr {
 	}
 }
 
-
 func (p *Parser) parsePrefixExpression() syntaxtree.Expr {
 	// imagine getting !66 as parameter
 	// ! becomes the current expression and its token is !
@@ -380,7 +380,6 @@ func (p *Parser) parseIfExpression() syntaxtree.Expr {
 	}
 	p.jump()
 
-
 	// parse the block statement
 	ifExpr.Consequence = p.parseBlockStatement()
 
@@ -417,4 +416,71 @@ func (p *Parser) parseBlockStatement() *syntaxtree.BlockStmt {
 	}
 
 	return blockStmt
+}
+
+func (p *Parser) parseFunctionLiteral() syntaxtree.Expr {
+	fnLiteral := &syntaxtree.FunctionLiteral{Token: p.currentToken}
+
+	if p.nextToken.Type != token.LeftParenthesis {
+		msg := generateErrorMsg(p.currentToken.Type, token.LeftParenthesis, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	// jump to the left parenthesis
+	p.jump()
+
+	fnLiteral.Parameters = p.parseFunctionParameters()
+
+	// after parsing the parameters, the next token must be the left brace.
+	// opening the function body
+	if p.nextToken.Type != token.LeftBrace {
+		msg := generateErrorMsg(p.currentToken.Type, token.LeftBrace, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	p.jump()
+
+	// same as if expr consequence / alternative parsing
+	fnLiteral.Body = p.parseBlockStatement()
+
+	return fnLiteral
+}
+
+func (p *Parser) parseFunctionParameters() []*syntaxtree.Identifier {
+	var ids []*syntaxtree.Identifier
+
+	// no parameters
+	if p.nextToken.Type == token.RightParenthesis {
+		p.jump()
+		return ids
+	}
+
+	p.jump()
+
+	// since there is right parenthesis, there is at least 1 parameters
+	// therefore we parse it manually
+	id := &syntaxtree.Identifier{Token: p.currentToken, Value: p.currentToken.Literal}
+	ids = append(ids, id)
+
+	// while there are parameters left, add them to the ids
+	for p.nextToken.Type == token.Comma {
+		// jump to the comma
+		p.jump()
+		// jump to the parameter
+		p.jump()
+
+		id := &syntaxtree.Identifier{Token: p.currentToken, Value: p.currentToken.Literal}
+		ids = append(ids, id)
+	}
+
+	// no more comma, the next token must be a right parenthesis
+	if p.nextToken.Type != token.RightParenthesis {
+		msg := generateErrorMsg(p.currentToken.Type, token.RightParenthesis, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	// jump to the right parenthesis
+	p.jump()
+
+	return ids
 }
