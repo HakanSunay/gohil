@@ -344,3 +344,56 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		}
 	}
 }
+
+func TestIfExpression(t *testing.T) {
+	input := `if (x < y) { x }`
+
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("expected len (%d), but got %d", 1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	if !ok {
+		t.Fatalf("type asserting to ExpressionsStmt failed, got %T", program.Statements[0])
+	}
+
+	exp, ok := stmt.Expression.(*syntaxtree.IfExpr)
+	if !ok {
+		t.Fatalf("type asserting to IfExpr failed, got %T", stmt.Expression)
+	}
+
+	conditionExpr, ok := exp.Condition.(*syntaxtree.InfixExpr)
+	if !ok {
+		t.Errorf("type asserting to ExpressionsStmt failed, got %T", exp.Condition)
+	}
+	if conditionExpr.Left.String() != "x" {
+		t.Errorf("expected left side of condition expr to be x, but got %v", conditionExpr.Left.String())
+	}
+	if conditionExpr.Operator != "<" {
+		t.Errorf("expected < operator, but got %v", conditionExpr.Operator)
+	}
+	if conditionExpr.Right.String() != "y" {
+		t.Errorf("expected right side of condition expr to be y, but got %v", conditionExpr.Left.String())
+	}
+
+	if len(exp.Consequence.Statements) != 1 {
+		t.Errorf("expected len 1, but got %d", len(exp.Consequence.Statements))
+	}
+
+	consequence, ok := exp.Consequence.Statements[0].(*syntaxtree.ExpressionStmt)
+	if !ok {
+		t.Fatalf("type asserting to ExpressionsStmt failed, got %T", exp.Consequence.Statements[0])
+	}
+
+	if consequence.Expression.String() != "x" {
+		t.Errorf("expected consequence expression to be x, but got %v", consequence.Expression.String())
+	}
+
+	if exp.Alternative != nil {
+		t.Errorf("expected else alternative to be nil, but got %v", exp.Alternative.String())
+	}
+}

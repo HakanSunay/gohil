@@ -124,3 +124,32 @@ func (i *InfixExpr) String() string {
 }
 
 func (i *InfixExpr) exprNode() {}
+
+type IfExpr struct {
+	Token token.Token // if
+	Condition Expr
+	Consequence *BlockStmt
+	Alternative *BlockStmt
+}
+
+func (ie *IfExpr) GetTokenLiteral() string {
+	return ie.Token.Literal
+}
+
+func (ie *IfExpr) String() string {
+	var builder strings.Builder
+
+	builder.WriteString("if")
+	builder.WriteString(ie.Condition.String())
+	builder.WriteString(" ")
+	builder.WriteString(ie.Consequence.String())
+
+	if ie.Alternative != nil {
+		builder.WriteString("else ")
+		builder.WriteString(ie.Alternative.String())
+	}
+
+	return builder.String()
+}
+
+func (ie *IfExpr) exprNode() {}

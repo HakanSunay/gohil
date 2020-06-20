@@ -88,8 +88,6 @@ func (e *ExpressionStmt) GetTokenLiteral() string {
 	return e.Token.Literal
 }
 
-func (e *ExpressionStmt) stmtNode() {}
-
 func (e *ExpressionStmt) String() string {
 	if e.Expression != nil {
 		return e.Expression.String()
@@ -97,3 +95,27 @@ func (e *ExpressionStmt) String() string {
 
 	return ""
 }
+
+func (e *ExpressionStmt) stmtNode() {}
+
+// BlockStmt defines a block statement.
+// Used in conditional expressions - if, and function definitions
+type BlockStmt struct {
+	Token token.Token // the { token
+	Statements []Stmt
+}
+
+func (bs *BlockStmt) GetTokenLiteral() string {
+	return bs.Token.Literal
+}
+func (bs *BlockStmt) String() string {
+	var builder strings.Builder
+
+	for _, s := range bs.Statements {
+		builder.WriteString(s.String())
+	}
+
+	return builder.String()
+}
+
+func (bs *BlockStmt) stmtNode() {}

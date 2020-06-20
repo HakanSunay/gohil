@@ -86,6 +86,7 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.addPrefixFunc(token.ExclamationMark, parser.parsePrefixExpression)
 	parser.addPrefixFunc(token.Minus, parser.parsePrefixExpression)
 	parser.addPrefixFunc(token.LeftParenthesis, parser.parseGroupedExpression)
+	parser.addPrefixFunc(token.If, parser.parseIfExpression)
 
 	// infix funcs
 	parser.addInfixFunc(token.Plus, parser.parseInfixExpression)
@@ -339,9 +340,81 @@ func (p *Parser) parseGroupedExpression() syntaxtree.Expr {
 	expr := p.parseExpression(Lowest)
 
 	if p.nextToken.Type != token.RightParenthesis {
+		msg := generateErrorMsg(p.currentToken.Type, token.RightParenthesis, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 
 	p.jump()
 	return expr
+}
+
+func (p *Parser) parseIfExpression() syntaxtree.Expr {
+	ifExpr := &syntaxtree.IfExpr{Token: p.currentToken}
+
+	if p.nextToken.Type != token.LeftParenthesis {
+		msg := generateErrorMsg(p.currentToken.Type, token.LeftParenthesis, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	// jump to the left parenthesis
+	p.jump()
+
+	// jump to the condition
+	p.jump()
+	// parse the condition
+	ifExpr.Condition = p.parseExpression(Lowest)
+
+	if p.nextToken.Type != token.RightParenthesis {
+		msg := generateErrorMsg(p.currentToken.Type, token.RightParenthesis, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	p.jump()
+
+	// parse the block statement leading (
+	if p.nextToken.Type != token.LeftBrace {
+		msg := generateErrorMsg(p.currentToken.Type, token.LeftBrace, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	p.jump()
+
+
+	// parse the block statement
+	ifExpr.Consequence = p.parseBlockStatement()
+
+	// if the ELSE is present, parse it and its block statement
+	if p.nextToken.Type == token.Else {
+		p.jump()
+
+		if p.nextToken.Type != token.LeftBrace {
+			msg := generateErrorMsg(p.currentToken.Type, token.LeftBrace, p.nextToken.Type)
+			p.errors = append(p.errors, msg)
+			return nil
+		}
+		p.jump()
+
+		ifExpr.Alternative = p.parseBlockStatement()
+	}
+
+	return ifExpr
+}
+
+func (p *Parser) parseBlockStatement() *syntaxtree.BlockStmt {
+	blockStmt := &syntaxtree.BlockStmt{
+		Token:      p.currentToken,
+		Statements: []syntaxtree.Stmt{},
+	}
+
+	p.jump()
+	for p.currentToken.Type != token.RightBrace {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			blockStmt.Statements = append(blockStmt.Statements, stmt)
+		}
+		p.jump()
+	}
+
+	return blockStmt
 }
