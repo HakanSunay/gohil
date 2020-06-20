@@ -170,11 +170,13 @@ func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 		p.errors = append(p.errors, msg)
 		return nil
 	}
+	// jump to to the assign token
+	p.jump()
 
-	// TODO: handle parsing expression to statement value
-	// This is not that easy currently, since we are planning to have functions,
-	// strings, integers, maps, arrays,
-	// skipping the expression until we get to the semicolon
+	// jump to the value
+	p.jump()
+	stmt.Value = p.parseExpression(Lowest)
+
 	for p.currentToken.Type != token.SemiColon {
 		p.jump()
 	}
@@ -200,7 +202,8 @@ func (p *Parser) parseReturnStatement() *syntaxtree.ReturnStmt {
 	// let's move to the next token - the expression
 	p.jump()
 
-	// TODO: handle expression parsing to ReturnValue
+	// parse the return value
+	stmt.ReturnValue = p.parseExpression(Lowest)
 
 	for p.currentToken.Type != token.SemiColon {
 		p.jump()

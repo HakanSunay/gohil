@@ -13,6 +13,7 @@ import (
 // TODO: try to apply DRY to test cases
 
 func TestLetStatements(t *testing.T) {
+	// TODO: add tests for bool and string as well, not only integer literals
 	input := `
 let x = 6;
 let y = 77;
@@ -32,10 +33,11 @@ let zzz = 888;
 
 	tests := []struct {
 		expectedIdentifier string
+		expectedValue int
 	}{
-		{"x"},
-		{"y"},
-		{"zzz"},
+		{"x", 6},
+		{"y", 77},
+		{"zzz", 888},
 	}
 	for i, tt := range tests {
 		stmt := program.Statements[i]
@@ -55,6 +57,9 @@ let zzz = 888;
 		if letStmt.Name.GetTokenLiteral() != tt.expectedIdentifier {
 			t.Errorf("expected token literal: %v, but got %v",
 				tt.expectedIdentifier, letStmt.Name.GetTokenLiteral())
+		}
+		if val, _ := letStmt.Value.(*syntaxtree.IntegerLiteral); val.Value != tt.expectedValue {
+			t.Errorf("expected statement value to be %d, but got %d", tt.expectedValue, val.Value)
 		}
 	}
 }
