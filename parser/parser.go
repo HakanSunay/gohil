@@ -177,7 +177,7 @@ func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 	p.jump()
 	stmt.Value = p.parseExpression(Lowest)
 
-	for p.currentToken.Type != token.SemiColon {
+	if p.nextToken.Type == token.SemiColon {
 		p.jump()
 	}
 
@@ -205,7 +205,7 @@ func (p *Parser) parseReturnStatement() *syntaxtree.ReturnStmt {
 	// parse the return value
 	stmt.ReturnValue = p.parseExpression(Lowest)
 
-	for p.currentToken.Type != token.SemiColon {
+	if p.nextToken.Type == token.SemiColon {
 		p.jump()
 	}
 
