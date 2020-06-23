@@ -187,7 +187,7 @@ func (p *Parser) parseLetStatement() *syntaxtree.LetStmt {
 // TODO: logging
 // generateErrorMsg generated error message for unexpected token retrieval
 func generateErrorMsg(cur token.Type, exp token.Type, actual token.Type) string {
-	return fmt.Sprintf("current token (%s) expected next token to be (%s), but got (%s)",
+	return fmt.Sprintf("Current token of type (%s) expected next token of type (%s), but got (%s)",
 		cur, exp, actual)
 }
 
