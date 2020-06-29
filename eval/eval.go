@@ -31,6 +31,11 @@ func Eval(node syntaxtree.Node) object.Object {
 	case *syntaxtree.PrefixExpr:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
+
+	case *syntaxtree.InfixExpr:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalInfixExpression(node.Operator, left, right)
 	}
 
 	return nil
@@ -78,4 +83,33 @@ func evalNegativeValueExpression(right object.Object) object.Object {
 	}
 
 	return &object.Integer{Value: -(right.(*object.Integer).Value)}
+}
+
+func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.IntegerObject && right.Type() == object.IntegerObject:
+		return evalIntegerInfixExpression(operator, left, right)
+	default:
+		return nil
+	}
+}
+
+func evalIntegerInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	// type assertions should have already been done using the Type method
+	// still might need to guard for panics
+	leftVal := left.(*object.Integer).Value
+	rightVal := right.(*object.Integer).Value
+
+	switch operator {
+	case "+":
+		return &object.Integer{Value: leftVal + rightVal}
+	case "-":
+		return &object.Integer{Value: leftVal - rightVal}
+	case "*":
+		return &object.Integer{Value: leftVal * rightVal}
+	case "/":
+		return &object.Integer{Value: leftVal / rightVal}
+	default:
+		return nil
+	}
 }
