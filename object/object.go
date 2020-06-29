@@ -9,7 +9,7 @@ type Type string
 const (
 	IntegerObject Type = "Integer"
 	BooleanObject Type = "Boolean"
-	NullObject Type = "Null"
+	NullObject    Type = "Null"
 )
 
 type Object interface {
