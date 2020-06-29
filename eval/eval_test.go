@@ -88,6 +88,30 @@ func TestEvalNegateExpression(t *testing.T) {
 	}
 }
 
+func TestIfElseExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"if (true) { 10 }", 10},
+		{"if (false) { 10 }", nil},
+		{"if (6) { 10 }", 10},
+		{"if (6 < 9) { 10 }", 10},
+		{"if (6 > 9) { 10 }", nil},
+		{"if (6 > 9) { 10 } else { 20 }", 20},
+		{"if (6 < 9) { 10 } else { 20 }", 10},
+	}
+	for _, tt := range tests {
+		evaluated := evaluate(tt.input)
+		integer, ok := tt.expected.(int)
+		if ok {
+			verifyIntegerObj(t, evaluated, integer)
+		} else {
+			verifyNullObject(t, evaluated)
+		}
+	}
+}
+
 func evaluate(input string) object.Object {
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)
@@ -113,5 +137,11 @@ func verifyIntegerObj(t *testing.T, obj object.Object, expected int) {
 	}
 	if val.Value != expected {
 		t.Errorf("expected %v, but got %v", expected, val.Value)
+	}
+}
+
+func verifyNullObject(t *testing.T, obj object.Object) {
+	if obj != Null {
+		t.Errorf("object is not NULL. got=%T (%+v)", obj, obj)
 	}
 }

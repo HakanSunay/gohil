@@ -18,6 +18,8 @@ func Eval(node syntaxtree.Node) object.Object {
 		return evalStatements(node.Statements) // start traversing the program tree
 	case *syntaxtree.ExpressionStmt:
 		return Eval(node.Expression)
+	case *syntaxtree.BlockStmt:
+		return evalStatements(node.Statements)
 
 	// Expressions
 	case *syntaxtree.IntegerLiteral:
@@ -33,6 +35,9 @@ func Eval(node syntaxtree.Node) object.Object {
 		left := Eval(node.Left)
 		right := Eval(node.Right)
 		return evalInfixExpression(node.Operator, left, right)
+
+	case *syntaxtree.IfExpr:
+		return evalIfExpression(node)
 	}
 
 	return nil
@@ -117,7 +122,7 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	case "<":
 		return parseToBooleanInstance(leftVal < rightVal)
 	default:
-		return nil
+		return Null
 	}
 }
 
@@ -137,4 +142,18 @@ func parseToBooleanInstance(p bool) *object.Boolean {
 		return True
 	}
 	return False
+}
+
+func evalIfExpression(node *syntaxtree.IfExpr) object.Object {
+	condition := Eval(node.Condition)
+	// This is referred to as being "truthy"
+	// this means that we can evaluate expr like if 5 { ... }
+
+	if truthy := condition != Null && condition != False; truthy {
+		return Eval(node.Consequence)
+	} else if node.Alternative != nil {
+		return Eval(node.Alternative)
+	} else {
+		return Null
+	}
 }
