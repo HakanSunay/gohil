@@ -18,7 +18,12 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 
 	scanner := bufio.NewScanner(reader)
 	for {
-		io.WriteString(writer, prompt)
+		_, err := io.WriteString(writer, prompt)
+		if err != nil {
+			log.Errorf("Unable to redirect prompt output")
+			continue
+		}
+
 		scanned := scanner.Scan()
 		if !scanned {
 			return
@@ -32,7 +37,10 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 		if len(p.GetErrors()) > 0 {
 			log.Errorf("Parse encountered the following erros: %v", p.GetErrors())
 			for _, errorMsg := range p.GetErrors() {
-				io.WriteString(writer, errorMsg + "\n")
+				_, err := io.WriteString(writer, errorMsg + "\n")
+				if err != nil {
+					log.Errorf("Unable to redirect error output")
+				}
 			}
 			continue
 		}
@@ -43,6 +51,9 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 			continue
 		}
 
-		io.WriteString(writer, result.Inspect() + "\n")
+		_, err = io.WriteString(writer, result.Inspect() + "\n")
+		if err != nil {
+			log.Errorf("Unable to redirect result output")
+		}
 	}
 }
