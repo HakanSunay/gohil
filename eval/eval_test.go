@@ -1,10 +1,11 @@
 package eval
 
 import (
+	"testing"
+
 	"github.com/HakanSunay/gohil/lexer"
 	"github.com/HakanSunay/gohil/object"
 	"github.com/HakanSunay/gohil/parser"
-	"testing"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
