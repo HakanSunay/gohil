@@ -53,6 +53,16 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"9 < 6", false},
 		{"9 == 6", false},
 		{"9 != 6", true},
+
+		{"true == true", true},
+		{"false == false", true},
+		{"true == false", false},
+		{"true != false", true},
+		{"false != true", true},
+		{"(6 < 9) == true", true},
+		{"(6 < 9) == false", false},
+		{"(6 > 9) == true", false},
+		{"(6 > 9) == false", true},
 	}
 	for _, tt := range tests {
 		evaluatedObj := evaluate(tt.input)
