@@ -5,6 +5,12 @@ import (
 	"github.com/HakanSunay/gohil/syntaxtree"
 )
 
+var (
+	Null  = &object.Null{}
+	True  = &object.Boolean{Value: true}
+	False = &object.Boolean{Value: false}
+)
+
 func Eval(node syntaxtree.Node) object.Object {
 	switch node := node.(type) {
 	// Statements:
@@ -17,10 +23,14 @@ func Eval(node syntaxtree.Node) object.Object {
 	case *syntaxtree.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *syntaxtree.BooleanLiteral:
-		// TODO: Performance Boost
-		// Performance boost idea: Use same instance for TRUE and FALSE,
-		// instead of allocating new instance every time we encounter BooleanLiterals
-		return &object.Boolean{Value: node.Value}
+		if node.Value == true {
+			return True
+		}
+		return False
+	// hil supports 2 prefix operators: ! (excl. Mark / Bang) and - (minus)
+	case *syntaxtree.PrefixExpr:
+		right := Eval(node.Right)
+		return evalPrefixExpression(node.Operator, right)
 	}
 
 	return nil
@@ -35,4 +45,26 @@ func evalStatements(statements []syntaxtree.Stmt) object.Object {
 	}
 
 	return result
+}
+
+func evalPrefixExpression(operator string, right object.Object) object.Object {
+	switch operator {
+	case "!":
+		return evalBangOperatorExpression(right)
+	default:
+		return nil
+	}
+}
+
+func evalBangOperatorExpression(right object.Object) object.Object {
+	switch right {
+	case True:
+		return False
+	case False:
+		return True
+	case Null:
+		return True
+	default:
+		return False
+	}
 }

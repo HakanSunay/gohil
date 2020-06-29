@@ -37,6 +37,24 @@ func TestEvalBooleanExpression(t *testing.T) {
 	}
 }
 
+func TestEvalNegateExpression(t *testing.T) {
+	tests := []struct {
+		input  string
+		output bool
+	}{
+		{"!true", false},
+		{"!false", true},
+		{"!6", false},
+		{"!!true", true},
+		{"!!false", false},
+		{"!!6", true},
+	}
+	for _, tt := range tests {
+		evaluatedObj := evaluate(tt.input)
+		verifyBooleanObj(t, evaluatedObj, tt.output)
+	}
+}
+
 func evaluate(input string) object.Object {
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)
