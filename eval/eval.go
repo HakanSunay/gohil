@@ -23,10 +23,7 @@ func Eval(node syntaxtree.Node) object.Object {
 	case *syntaxtree.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *syntaxtree.BooleanLiteral:
-		if node.Value == true {
-			return True
-		}
-		return False
+		return parseToBooleanInstance(node.Value)
 	// hil supports 2 prefix operators: ! (excl. Mark / Bang) and - (minus)
 	case *syntaxtree.PrefixExpr:
 		right := Eval(node.Right)
@@ -112,30 +109,32 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	case "/":
 		return &object.Integer{Value: leftVal / rightVal}
 	case "==":
-		return &object.Boolean{Value: leftVal == rightVal}
+		return parseToBooleanInstance(leftVal == rightVal)
 	case "!=":
-		return &object.Boolean{Value: leftVal != rightVal}
+		return parseToBooleanInstance(leftVal != rightVal)
 	case ">":
-		return &object.Boolean{Value: leftVal > rightVal}
+		return parseToBooleanInstance(leftVal > rightVal)
 	case "<":
-		return &object.Boolean{Value: leftVal < rightVal}
+		return parseToBooleanInstance(leftVal < rightVal)
 	default:
 		return nil
 	}
 }
 
 func evalBooleanInfixExpression(operator string, left object.Object, right object.Object) object.Object {
-	// type assertions should have already been done using the Type method
-	// still might need to guard for panics
-	leftVal := left.(*object.Boolean).Value
-	rightVal := right.(*object.Boolean).Value
-
 	switch operator {
 	case "==":
-		return &object.Boolean{Value: leftVal == rightVal}
+		return parseToBooleanInstance(left == right)
 	case "!=":
-		return &object.Boolean{Value: leftVal != rightVal}
+		return parseToBooleanInstance(left != right)
 	default:
-		return nil
+		return Null
 	}
+}
+
+func parseToBooleanInstance(p bool) *object.Boolean {
+	if p {
+		return True
+	}
+	return False
 }
