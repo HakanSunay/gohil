@@ -10,7 +10,7 @@ import (
 
 func TestEvalIntegerExpression(t *testing.T) {
 	tests := []struct {
-		input string
+		input  string
 		output int
 	}{
 		{"0", 0},
