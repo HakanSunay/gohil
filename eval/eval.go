@@ -41,7 +41,7 @@ func Eval(node syntaxtree.Node) object.Object {
 		return evalIfExpression(node)
 	}
 
-	return nil
+	return Null
 }
 
 func evalProgram(statements []syntaxtree.Stmt) object.Object {
@@ -81,7 +81,7 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	case "-":
 		return evalNegativeValueExpression(right)
 	default:
-		return nil
+		return Null
 	}
 }
 
@@ -101,7 +101,7 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 func evalNegativeValueExpression(right object.Object) object.Object {
 	if right.Type() != object.IntegerObject {
 		// TODO: log here
-		return nil
+		return Null
 	}
 
 	return &object.Integer{Value: -(right.(*object.Integer).Value)}
@@ -114,7 +114,7 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	case left.Type() == object.BooleanObject && right.Type() == object.BooleanObject:
 		return evalBooleanInfixExpression(operator, left, right)
 	default:
-		return nil
+		return Null
 	}
 }
 
