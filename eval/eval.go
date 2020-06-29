@@ -16,6 +16,8 @@ func Eval(node syntaxtree.Node) object.Object {
 	// Expressions
 	case *syntaxtree.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+	case *syntaxtree.BooleanLiteral:
+		return &object.Boolean{Value: node.Value}
 	}
 
 	return nil
