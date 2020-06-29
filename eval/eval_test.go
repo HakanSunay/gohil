@@ -23,12 +23,36 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 }
 
+func TestEvalBooleanExpression(t *testing.T) {
+	tests := []struct {
+		input  string
+		output bool
+	}{
+		{"true", true},
+		{"false", false},
+	}
+	for _, tt := range tests {
+		evaluatedObj := evaluate(tt.input)
+		verifyBooleanObj(t, evaluatedObj, tt.output)
+	}
+}
+
 func evaluate(input string) object.Object {
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)
 	program := p.ParseProgram()
 	obj := Eval(program)
 	return obj
+}
+
+func verifyBooleanObj(t *testing.T, obj object.Object, expected bool) {
+	val, ok := obj.(*object.Boolean)
+	if !ok {
+		t.Fatalf("Expected Boolean object type, but got %T", obj)
+	}
+	if val.Value != expected {
+		t.Errorf("expected %v, but got %v", expected, val.Value)
+	}
 }
 
 func verifyIntegerObj(t *testing.T, obj object.Object, expected int) {
