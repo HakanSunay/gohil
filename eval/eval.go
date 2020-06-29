@@ -17,6 +17,9 @@ func Eval(node syntaxtree.Node) object.Object {
 	case *syntaxtree.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *syntaxtree.BooleanLiteral:
+		// TODO: Performance Boost
+		// Performance boost idea: Use same instance for TRUE and FALSE,
+		// instead of allocating new instance every time we encounter BooleanLiterals
 		return &object.Boolean{Value: node.Value}
 	}
 
