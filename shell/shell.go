@@ -3,6 +3,7 @@ package shell
 import (
 	"bufio"
 	"context"
+	"github.com/HakanSunay/gohil/eval"
 	"io"
 
 	"github.com/HakanSunay/gohil/lexer"
@@ -36,8 +37,12 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 			continue
 		}
 
+		result := eval.Eval(program)
+		if result == nil {
+			log.Errorf("Unsupported evaluation type")
+			continue
+		}
 
-		io.WriteString(writer, program.String() + "\n")
-		io.WriteString(writer, "\n")
+		io.WriteString(writer, result.Inspect() + "\n")
 	}
 }
