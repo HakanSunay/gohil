@@ -16,6 +16,9 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"0", 0},
 		{"6", 6},
 		{"1337", 1337},
+		// negative values
+		{"-6", -6},
+		{"-1337", -1337},
 	}
 	for _, tt := range tests {
 		evaluatedObj := evaluate(tt.input)
