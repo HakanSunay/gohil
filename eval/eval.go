@@ -15,13 +15,16 @@ func Eval(node syntaxtree.Node) object.Object {
 	switch node := node.(type) {
 	// Statements:
 	case *syntaxtree.Program:
-		return evalStatements(node.Statements) // start traversing the program tree
+		return evalProgram(node.Statements) // start traversing the program tree
 	case *syntaxtree.ExpressionStmt:
 		return Eval(node.Expression)
 	case *syntaxtree.BlockStmt:
-		return evalStatements(node.Statements)
+		return evalBlockStatement(node)
+	case *syntaxtree.ReturnStmt:
+		val := Eval(node.ReturnValue)
+		return &object.ReturnValue{Value: val}
 
-	// Expressions
+	// Expressions:
 	case *syntaxtree.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *syntaxtree.BooleanLiteral:
@@ -30,12 +33,10 @@ func Eval(node syntaxtree.Node) object.Object {
 	case *syntaxtree.PrefixExpr:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
-
 	case *syntaxtree.InfixExpr:
 		left := Eval(node.Left)
 		right := Eval(node.Right)
 		return evalInfixExpression(node.Operator, left, right)
-
 	case *syntaxtree.IfExpr:
 		return evalIfExpression(node)
 	}
@@ -43,14 +44,33 @@ func Eval(node syntaxtree.Node) object.Object {
 	return nil
 }
 
-func evalStatements(statements []syntaxtree.Stmt) object.Object {
+func evalProgram(statements []syntaxtree.Stmt) object.Object {
 	var result object.Object
 
 	for _, stmt := range statements {
 		// last evaluated statement will end up as the result
 		result = Eval(stmt)
+
+		// terminate evaluation if a return statement is encountered
+		if returnValue, ok := result.(*object.ReturnValue); ok {
+			// unwrapping the value here,
+			// this is the main difference with evalBlockStatement,
+			// because we need to support nested block statements with returns
+			return returnValue.Value
+		}
 	}
 
+	return result
+}
+
+func evalBlockStatement(block *syntaxtree.BlockStmt) object.Object {
+	var result object.Object
+	for _, statement := range block.Statements {
+		result = Eval(statement)
+		if result != nil && result.Type() == object.ReturnValueObject {
+			return result
+		}
+	}
 	return result
 }
 

@@ -7,9 +7,10 @@ import (
 type Type string
 
 const (
-	IntegerObject Type = "Integer"
-	BooleanObject Type = "Boolean"
-	NullObject    Type = "Null"
+	IntegerObject     Type = "Integer"
+	BooleanObject     Type = "Boolean"
+	NullObject        Type = "Null"
+	ReturnValueObject Type = "ReturnValue"
 )
 
 type Object interface {
@@ -52,4 +53,18 @@ func (n *Null) Type() Type {
 
 func (n *Null) Inspect() string {
 	return "null"
+}
+
+// ReturnValue is used as a wrapper around the to-be returned Value Object.
+// This is strictly done to skip doing ugly go to statements.
+type ReturnValue struct {
+	Value Object
+}
+
+func (rv *ReturnValue) Type() Type {
+	return ReturnValueObject
+}
+
+func (rv *ReturnValue) Inspect() string {
+	return rv.Value.Inspect()
 }
