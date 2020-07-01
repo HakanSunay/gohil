@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"github.com/HakanSunay/gohil/object"
 	"github.com/HakanSunay/gohil/syntaxtree"
 )
@@ -22,6 +23,9 @@ func Eval(node syntaxtree.Node) object.Object {
 		return evalBlockStatement(node)
 	case *syntaxtree.ReturnStmt:
 		val := Eval(node.ReturnValue)
+		if isError(val) {
+			return val
+		}
 		return &object.ReturnValue{Value: val}
 
 	// Expressions:
@@ -32,10 +36,21 @@ func Eval(node syntaxtree.Node) object.Object {
 	// hil supports 2 prefix operators: ! (excl. Mark / Bang) and - (minus)
 	case *syntaxtree.PrefixExpr:
 		right := Eval(node.Right)
+		if isError(right) {
+			return right
+		}
 		return evalPrefixExpression(node.Operator, right)
 	case *syntaxtree.InfixExpr:
 		left := Eval(node.Left)
+		if isError(left) {
+			return left
+		}
+
 		right := Eval(node.Right)
+		if isError(right) {
+			return right
+		}
+
 		return evalInfixExpression(node.Operator, left, right)
 	case *syntaxtree.IfExpr:
 		return evalIfExpression(node)
@@ -51,12 +66,11 @@ func evalProgram(statements []syntaxtree.Stmt) object.Object {
 		// last evaluated statement will end up as the result
 		result = Eval(stmt)
 
-		// terminate evaluation if a return statement is encountered
-		if returnValue, ok := result.(*object.ReturnValue); ok {
-			// unwrapping the value here,
-			// this is the main difference with evalBlockStatement,
-			// because we need to support nested block statements with returns
-			return returnValue.Value
+		switch result := result.(type) {
+		case *object.ReturnValue:
+			return result.Value
+		case *object.Error:
+			return result
 		}
 	}
 
@@ -67,8 +81,11 @@ func evalBlockStatement(block *syntaxtree.BlockStmt) object.Object {
 	var result object.Object
 	for _, statement := range block.Statements {
 		result = Eval(statement)
-		if result != nil && result.Type() == object.ReturnValueObject {
-			return result
+		if result != nil {
+			rt := result.Type()
+			if rt == object.ReturnValueObject || rt == object.ErrorObject {
+				return result
+			}
 		}
 	}
 	return result
@@ -81,7 +98,7 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	case "-":
 		return evalNegativeValueExpression(right)
 	default:
-		return Null
+		return newError("unknown operator: %s%s", operator, right.Type())
 	}
 }
 
@@ -100,8 +117,7 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 
 func evalNegativeValueExpression(right object.Object) object.Object {
 	if right.Type() != object.IntegerObject {
-		// TODO: log here
-		return Null
+		return newError("unknown operator: -%s", right.Type())
 	}
 
 	return &object.Integer{Value: -(right.(*object.Integer).Value)}
@@ -113,8 +129,10 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 		return evalIntegerInfixExpression(operator, left, right)
 	case left.Type() == object.BooleanObject && right.Type() == object.BooleanObject:
 		return evalBooleanInfixExpression(operator, left, right)
+	case left.Type() != right.Type():
+		return newError("type mismatch: %s %s %s", left.Type(), operator, right.Type())
 	default:
-		return Null
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -142,7 +160,7 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	case "<":
 		return parseToBooleanInstance(leftVal < rightVal)
 	default:
-		return Null
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -153,7 +171,7 @@ func evalBooleanInfixExpression(operator string, left object.Object, right objec
 	case "!=":
 		return parseToBooleanInstance(left != right)
 	default:
-		return Null
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -166,9 +184,12 @@ func parseToBooleanInstance(p bool) *object.Boolean {
 
 func evalIfExpression(node *syntaxtree.IfExpr) object.Object {
 	condition := Eval(node.Condition)
+	if isError(condition) {
+		return condition
+	}
+
 	// This is referred to as being "truthy"
 	// this means that we can evaluate expr like if 5 { ... }
-
 	if truthy := condition != Null && condition != False; truthy {
 		return Eval(node.Consequence)
 	} else if node.Alternative != nil {
@@ -176,4 +197,17 @@ func evalIfExpression(node *syntaxtree.IfExpr) object.Object {
 	} else {
 		return Null
 	}
+}
+
+func newError(format string, args ...interface{}) *object.Error {
+	return &object.Error{Message: fmt.Sprintf(format, args...)}
+}
+
+// isError is used when checking for errors whenever we call Eval inside of Eval,
+// in order to stop errors from being passed around and then bubbling up far away from their origin
+func isError(obj object.Object) bool {
+	if obj != nil {
+		return obj.Type() == object.ErrorObject
+	}
+	return false
 }
