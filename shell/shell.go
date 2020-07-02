@@ -3,6 +3,7 @@ package shell
 import (
 	"bufio"
 	"context"
+	"github.com/HakanSunay/gohil/env"
 	"github.com/HakanSunay/gohil/eval"
 	"io"
 
@@ -17,6 +18,8 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 	log := logger.GetFromContext(ctx)
 
 	scanner := bufio.NewScanner(reader)
+	environment := env.NewEnvironment()
+
 	for {
 		_, err := io.WriteString(writer, prompt)
 		if err != nil {
@@ -45,7 +48,7 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 			continue
 		}
 
-		result := eval.Eval(program)
+		result := eval.Eval(program, environment)
 		if result == nil {
 			log.Errorf("Unsupported evaluation type")
 			continue

@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"github.com/HakanSunay/gohil/env"
 	"github.com/HakanSunay/gohil/object"
 	"github.com/HakanSunay/gohil/syntaxtree"
 )
@@ -12,59 +13,67 @@ var (
 	False = &object.Boolean{Value: false}
 )
 
-func Eval(node syntaxtree.Node) object.Object {
+func Eval(node syntaxtree.Node, environment *env.Environment) object.Object {
 	switch node := node.(type) {
 	// Statements:
 	case *syntaxtree.Program:
-		return evalProgram(node.Statements) // start traversing the program tree
+		return evalProgram(node.Statements, environment) // start traversing the program tree
 	case *syntaxtree.ExpressionStmt:
-		return Eval(node.Expression)
+		return Eval(node.Expression, environment)
 	case *syntaxtree.BlockStmt:
-		return evalBlockStatement(node)
+		return evalBlockStatement(node, environment)
 	case *syntaxtree.ReturnStmt:
-		val := Eval(node.ReturnValue)
+		val := Eval(node.ReturnValue, environment)
 		if isError(val) {
 			return val
 		}
 		return &object.ReturnValue{Value: val}
+	case *syntaxtree.LetStmt:
+		val := Eval(node.Value, environment)
+		if isError(val) {
+			return val
+		}
+		environment.Set(node.Name.Value, val)
 
 	// Expressions:
+	case *syntaxtree.Identifier:
+		return evalIdentifier(node, environment)
 	case *syntaxtree.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *syntaxtree.BooleanLiteral:
 		return parseToBooleanInstance(node.Value)
 	// hil supports 2 prefix operators: ! (excl. Mark / Bang) and - (minus)
 	case *syntaxtree.PrefixExpr:
-		right := Eval(node.Right)
+		right := Eval(node.Right, environment)
 		if isError(right) {
 			return right
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *syntaxtree.InfixExpr:
-		left := Eval(node.Left)
+		left := Eval(node.Left, environment)
 		if isError(left) {
 			return left
 		}
 
-		right := Eval(node.Right)
+		right := Eval(node.Right, environment)
 		if isError(right) {
 			return right
 		}
 
 		return evalInfixExpression(node.Operator, left, right)
 	case *syntaxtree.IfExpr:
-		return evalIfExpression(node)
+		return evalIfExpression(node, environment)
 	}
 
-	return Null
+	return nil
 }
 
-func evalProgram(statements []syntaxtree.Stmt) object.Object {
+func evalProgram(statements []syntaxtree.Stmt, environment *env.Environment) object.Object {
 	var result object.Object
 
 	for _, stmt := range statements {
 		// last evaluated statement will end up as the result
-		result = Eval(stmt)
+		result = Eval(stmt, environment)
 
 		switch result := result.(type) {
 		case *object.ReturnValue:
@@ -77,10 +86,10 @@ func evalProgram(statements []syntaxtree.Stmt) object.Object {
 	return result
 }
 
-func evalBlockStatement(block *syntaxtree.BlockStmt) object.Object {
+func evalBlockStatement(block *syntaxtree.BlockStmt, environment *env.Environment) object.Object {
 	var result object.Object
 	for _, statement := range block.Statements {
-		result = Eval(statement)
+		result = Eval(statement, environment)
 		if result != nil {
 			rt := result.Type()
 			if rt == object.ReturnValueObject || rt == object.ErrorObject {
@@ -182,8 +191,8 @@ func parseToBooleanInstance(p bool) *object.Boolean {
 	return False
 }
 
-func evalIfExpression(node *syntaxtree.IfExpr) object.Object {
-	condition := Eval(node.Condition)
+func evalIfExpression(node *syntaxtree.IfExpr, environment *env.Environment) object.Object {
+	condition := Eval(node.Condition, environment)
 	if isError(condition) {
 		return condition
 	}
@@ -191,12 +200,21 @@ func evalIfExpression(node *syntaxtree.IfExpr) object.Object {
 	// This is referred to as being "truthy"
 	// this means that we can evaluate expr like if 5 { ... }
 	if truthy := condition != Null && condition != False; truthy {
-		return Eval(node.Consequence)
+		return Eval(node.Consequence, environment)
 	} else if node.Alternative != nil {
-		return Eval(node.Alternative)
+		return Eval(node.Alternative, environment)
 	} else {
 		return Null
 	}
+}
+
+func evalIdentifier(node *syntaxtree.Identifier, environment *env.Environment) object.Object {
+	val, ok := environment.Get(node.Value)
+	if !ok {
+		return newError("identifier not found: %s", node.Value)
+	}
+
+	return val
 }
 
 func newError(format string, args ...interface{}) *object.Error {

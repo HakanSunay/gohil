@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"github.com/HakanSunay/gohil/env"
 	"testing"
 
 	"github.com/HakanSunay/gohil/lexer"
@@ -173,6 +174,10 @@ func TestErrorHandling(t *testing.T) {
 			}`,
 			"unknown operator: Boolean + Boolean",
 		},
+		{
+			"foobar",
+			"identifier not found: foobar",
+		},
 	}
 	for _, tt := range tests {
 		evaluated := evaluate(tt.input)
@@ -189,11 +194,28 @@ func TestErrorHandling(t *testing.T) {
 	}
 }
 
+func TestLetStatements(t *testing.T) {
+	tests := []struct {
+		input string
+		expected int
+	}{
+		{"let a = 5; a;", 5},
+		{"let a = 5 * 5; a;", 25},
+		{"let a = 5; let b = a; b;", 5},
+		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+	}
+	for _, tt := range tests {
+		verifyIntegerObj(t, evaluate(tt.input), tt.expected)
+	}
+}
+
 func evaluate(input string) object.Object {
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)
 	program := p.ParseProgram()
-	obj := Eval(program)
+	// new env for each test case, so as not to persist the previous state
+	environment := env.NewEnvironment()
+	obj := Eval(program, environment)
 	return obj
 }
 
