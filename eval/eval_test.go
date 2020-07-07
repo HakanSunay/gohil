@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"github.com/HakanSunay/gohil/env"
 	"testing"
 
 	"github.com/HakanSunay/gohil/lexer"
@@ -209,12 +208,35 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
+func TestFunctionObject(t *testing.T) {
+	input := "fn(x) { x + 2; };"
+	evaluated := evaluate(input)
+
+	fn, ok := evaluated.(*object.Function)
+	if !ok {
+		t.Fatalf("expected Function type, but got %T", evaluated)
+	}
+
+	if len(fn.Parameters) != 1 {
+		t.Fatalf("expected function parameter len 1, but got %v", fn.Parameters)
+	}
+
+	if fn.Parameters[0].String() != "x" {
+		t.Fatalf("expected parameter x, but got %v", fn.Parameters[0])
+	}
+
+	expectedBody := "(x + 2)"
+	if fn.Body.String() != expectedBody {
+		t.Fatalf("expected function body %v, but got %v", expectedBody, fn.Body.String())
+	}
+}
+
 func evaluate(input string) object.Object {
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)
 	program := p.ParseProgram()
 	// new env for each test case, so as not to persist the previous state
-	environment := env.NewEnvironment()
+	environment := object.NewEnvironment()
 	obj := Eval(program, environment)
 	return obj
 }

@@ -2,6 +2,9 @@ package object
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/HakanSunay/gohil/syntaxtree"
 )
 
 type Type string
@@ -12,6 +15,7 @@ const (
 	NullObject        Type = "Null"
 	ReturnValueObject Type = "ReturnValue"
 	ErrorObject       Type = "Error"
+	FunctionObject    Type = "Function"
 )
 
 type Object interface {
@@ -80,4 +84,32 @@ func (e *Error) Type() Type {
 
 func (e *Error) Inspect() string {
 	return "ERROR: " + e.Message
+}
+
+type Function struct {
+	Parameters []*syntaxtree.Identifier
+	Body       *syntaxtree.BlockStmt
+	Env        *Environment
+}
+
+func (f *Function) Type() Type {
+	return FunctionObject
+}
+
+func (f *Function) Inspect() string {
+	var builder strings.Builder
+
+	var params []string
+	for _, p := range f.Parameters {
+		params = append(params, p.String())
+	}
+
+	builder.WriteString("fn")
+	builder.WriteString("(")
+	builder.WriteString(strings.Join(params, ", "))
+	builder.WriteString(") {\n")
+	builder.WriteString(f.Body.String())
+	builder.WriteString("\n}")
+
+	return builder.String()
 }

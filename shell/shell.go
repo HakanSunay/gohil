@@ -3,12 +3,12 @@ package shell
 import (
 	"bufio"
 	"context"
-	"github.com/HakanSunay/gohil/env"
-	"github.com/HakanSunay/gohil/eval"
 	"io"
 
+	"github.com/HakanSunay/gohil/eval"
 	"github.com/HakanSunay/gohil/lexer"
 	"github.com/HakanSunay/gohil/logger"
+	"github.com/HakanSunay/gohil/object"
 	"github.com/HakanSunay/gohil/parser"
 )
 
@@ -18,7 +18,7 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 	log := logger.GetFromContext(ctx)
 
 	scanner := bufio.NewScanner(reader)
-	environment := env.NewEnvironment()
+	environment := object.NewEnvironment()
 
 	for {
 		_, err := io.WriteString(writer, prompt)
@@ -40,7 +40,7 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 		if len(p.GetErrors()) > 0 {
 			log.Errorf("Parse encountered the following erros: %v", p.GetErrors())
 			for _, errorMsg := range p.GetErrors() {
-				_, err := io.WriteString(writer, errorMsg + "\n")
+				_, err := io.WriteString(writer, errorMsg+"\n")
 				if err != nil {
 					log.Errorf("Unable to redirect error output")
 				}
@@ -54,7 +54,7 @@ func Start(ctx context.Context, reader io.Reader, writer io.Writer) {
 			continue
 		}
 
-		_, err = io.WriteString(writer, result.Inspect() + "\n")
+		_, err = io.WriteString(writer, result.Inspect()+"\n")
 		if err != nil {
 			log.Errorf("Unable to redirect result output")
 		}

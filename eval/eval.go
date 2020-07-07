@@ -2,7 +2,7 @@ package eval
 
 import (
 	"fmt"
-	"github.com/HakanSunay/gohil/env"
+
 	"github.com/HakanSunay/gohil/object"
 	"github.com/HakanSunay/gohil/syntaxtree"
 )
@@ -13,7 +13,7 @@ var (
 	False = &object.Boolean{Value: false}
 )
 
-func Eval(node syntaxtree.Node, environment *env.Environment) object.Object {
+func Eval(node syntaxtree.Node, environment *object.Environment) object.Object {
 	switch node := node.(type) {
 	// Statements:
 	case *syntaxtree.Program:
@@ -68,7 +68,7 @@ func Eval(node syntaxtree.Node, environment *env.Environment) object.Object {
 	return nil
 }
 
-func evalProgram(statements []syntaxtree.Stmt, environment *env.Environment) object.Object {
+func evalProgram(statements []syntaxtree.Stmt, environment *object.Environment) object.Object {
 	var result object.Object
 
 	for _, stmt := range statements {
@@ -86,7 +86,7 @@ func evalProgram(statements []syntaxtree.Stmt, environment *env.Environment) obj
 	return result
 }
 
-func evalBlockStatement(block *syntaxtree.BlockStmt, environment *env.Environment) object.Object {
+func evalBlockStatement(block *syntaxtree.BlockStmt, environment *object.Environment) object.Object {
 	var result object.Object
 	for _, statement := range block.Statements {
 		result = Eval(statement, environment)
@@ -191,7 +191,7 @@ func parseToBooleanInstance(p bool) *object.Boolean {
 	return False
 }
 
-func evalIfExpression(node *syntaxtree.IfExpr, environment *env.Environment) object.Object {
+func evalIfExpression(node *syntaxtree.IfExpr, environment *object.Environment) object.Object {
 	condition := Eval(node.Condition, environment)
 	if isError(condition) {
 		return condition
@@ -208,7 +208,7 @@ func evalIfExpression(node *syntaxtree.IfExpr, environment *env.Environment) obj
 	}
 }
 
-func evalIdentifier(node *syntaxtree.Identifier, environment *env.Environment) object.Object {
+func evalIdentifier(node *syntaxtree.Identifier, environment *object.Environment) object.Object {
 	val, ok := environment.Get(node.Value)
 	if !ok {
 		return newError("identifier not found: %s", node.Value)
