@@ -204,7 +204,7 @@ func (l *Lexer) readString() string {
 	startIndex := l.currentIndex + 1
 	for {
 		l.nextChar()
-		if l.currentChar == '"' {
+		if l.currentChar == '"' || l.currentChar == 0 {
 			break
 		}
 	}
