@@ -63,6 +63,14 @@ func Eval(node syntaxtree.Node, environment *object.Environment) object.Object {
 		return evalInfixExpression(node.Operator, left, right)
 	case *syntaxtree.IfExpr:
 		return evalIfExpression(node, environment)
+	case *syntaxtree.FunctionLiteral:
+		params := node.Parameters
+		body := node.Body
+		return &object.Function{
+			Parameters: params,
+			Body:       body,
+			Env:        environment,
+		}
 	}
 
 	return nil
