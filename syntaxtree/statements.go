@@ -101,7 +101,7 @@ func (e *ExpressionStmt) stmtNode() {}
 // BlockStmt defines a block statement.
 // Used in conditional expressions - if, and function definitions
 type BlockStmt struct {
-	Token token.Token // the { token
+	Token      token.Token // the { token
 	Statements []Stmt
 }
 

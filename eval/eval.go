@@ -40,6 +40,8 @@ func Eval(node syntaxtree.Node, environment *object.Environment) object.Object {
 		return evalIdentifier(node, environment)
 	case *syntaxtree.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+	case *syntaxtree.StringLiteral:
+		return &object.String{Value: node.Value}
 	case *syntaxtree.BooleanLiteral:
 		return parseToBooleanInstance(node.Value)
 	// hil supports 2 prefix operators: ! (excl. Mark / Bang) and - (minus)
