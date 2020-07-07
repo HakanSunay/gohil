@@ -260,6 +260,18 @@ func TestStringLiteral(t *testing.T) {
 	}
 }
 
+func TestStringConcatenation(t *testing.T) {
+	input := `"Hello" + " " + "World!"`
+	evaluated := evaluate(input)
+	str, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("expected object type String, but got %T", evaluated)
+	}
+	if str.Value != "Hello World!" {
+		t.Errorf("expected value Hello World!, but got: %v", str.Value)
+	}
+}
+
 func evaluate(input string) object.Object {
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)
