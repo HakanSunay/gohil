@@ -33,7 +33,7 @@ let zzz = 888;
 
 	tests := []struct {
 		expectedIdentifier string
-		expectedValue int
+		expectedValue      int
 	}{
 		{"x", 6},
 		{"y", 77},
@@ -547,5 +547,21 @@ func TestCallExpressionParsing(t *testing.T) {
 
 	if secondExpr.Right.String() != "5" {
 		t.Errorf("expected 5, but got %v", secondExpr.Right.String())
+	}
+}
+
+func TestStringLiteralExpression(t *testing.T) {
+	input := `"hello world";`
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	stmt := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	literal, ok := stmt.Expression.(*syntaxtree.StringLiteral)
+	if !ok {
+		t.Fatalf("expected type StringLiteral, but got %T", stmt.Expression)
+	}
+	if literal.Value != "hello world" {
+		t.Errorf("expected literal value %v, but got %v", "hello world", literal.Value)
 	}
 }

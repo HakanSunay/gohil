@@ -90,6 +90,7 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.addPrefixFunc(token.LeftParenthesis, parser.parseGroupedExpression)
 	parser.addPrefixFunc(token.If, parser.parseIfExpression)
 	parser.addPrefixFunc(token.Function, parser.parseFunctionLiteral)
+	parser.addPrefixFunc(token.String, parser.parseStringLiteral)
 
 	// infix funcs
 	parser.addInfixFunc(token.Plus, parser.parseInfixExpression)
@@ -533,4 +534,8 @@ func (p *Parser) parseCallArguments() []syntaxtree.Expr {
 	p.jump()
 
 	return args
+}
+
+func (p *Parser) parseStringLiteral() syntaxtree.Expr {
+	return &syntaxtree.StringLiteral{Token: p.currentToken, Value: p.currentToken.Literal}
 }

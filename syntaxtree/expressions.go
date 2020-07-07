@@ -56,6 +56,21 @@ func (b *BooleanLiteral) String() string {
 
 func (b *BooleanLiteral) exprNode() {}
 
+type StringLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (sl *StringLiteral) GetTokenLiteral() string {
+	return sl.Token.Literal
+}
+
+func (sl *StringLiteral) String() string {
+	return sl.Token.Literal
+}
+
+func (sl *StringLiteral) exprNode() {}
+
 // PrefixExpr describes prefix expressions in gohil.
 // There are 2 types of prefix expressions in the language: ! and -
 // E.g: -66
