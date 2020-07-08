@@ -263,3 +263,28 @@ func (al *ArrayLiteral) GetTokenLiteral() string {
 }
 
 func (al *ArrayLiteral) exprNode() {}
+
+type IndexExpression struct {
+	Token token.Token // The [ token
+	Left  Expr        // the left side of an index expression is an expr: arr[4]
+	Index Expr        // the index is also an expression arr[3+4] is valid syntax in gohil
+}
+
+func (ie *IndexExpression) String() string {
+	var out strings.Builder
+
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString("[")
+	out.WriteString(ie.Index.String())
+	out.WriteString("]")
+	out.WriteString(")")
+
+	return out.String()
+}
+
+func (ie *IndexExpression) GetTokenLiteral() string {
+	return ie.Token.Literal
+}
+
+func (ie *IndexExpression) exprNode() {}

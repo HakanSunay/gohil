@@ -339,6 +339,11 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"(5 + 5) * 2",
 			"((5 + 5) * 2)",
 		},
+		{
+			"a * [1, 2, 3, 4][b * c] * d",
+			// index has the highest priority
+			"((a * ([1, 2, 3, 4][(b * c)])) * d)",
+		},
 	}
 
 	for _, tt := range tests {
@@ -590,7 +595,7 @@ func TestParsingArrayLiterals(t *testing.T) {
 	}
 	if firstInfixExpr.Operator != "*" {
 		t.Fatalf("expected operator *, but got %v", firstInfixExpr.Operator)
-	} 
+	}
 	if firstInfixExpr.Left.String() != "2" {
 		t.Fatalf("expected value 2, but got %v", firstInfixExpr.Left.String())
 	}
@@ -610,5 +615,36 @@ func TestParsingArrayLiterals(t *testing.T) {
 	}
 	if secondInfixExpr.Right.String() != "3" {
 		t.Fatalf("expected value 3, but got %v", firstInfixExpr.Right.String())
+	}
+}
+
+func TestParsingIndexExpressions(t *testing.T) {
+	input := "arrayList[2 * 2]"
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	indexExp, ok := stmt.Expression.(*syntaxtree.IndexExpression)
+	if !ok {
+		t.Fatalf("expected type IndexExpression, but got %T", stmt.Expression)
+	}
+
+	if indexExp.Left.String() != "arrayList" {
+		t.Fatalf("expected arrayList as left expr, but got %v", indexExp.Left.String())
+	}
+
+	infixExpr, ok := indexExp.Index.(*syntaxtree.InfixExpr)
+	if !ok {
+		t.Fatalf("expected type syntaxtree.ArrayLiteral, but got %T", stmt.Expression)
+	}
+	if infixExpr.Operator != "*" {
+		t.Fatalf("expected operator *, but got %v", infixExpr.Operator)
+	}
+	if infixExpr.Left.String() != "2" {
+		t.Fatalf("expected value 2, but got %v", infixExpr.Left.String())
+	}
+	if infixExpr.Right.String() != "2" {
+		t.Fatalf("expected value 2, but got %v", infixExpr.Right.String())
 	}
 }
