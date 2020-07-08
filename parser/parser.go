@@ -17,6 +17,7 @@ const (
 	Product
 	Prefix
 	Call
+	Index
 )
 
 var precedences = map[token.Type]int{
@@ -34,6 +35,8 @@ var precedences = map[token.Type]int{
 
 	token.Function:        Call,
 	token.LeftParenthesis: Call,
+
+	token.LeftBracket: Index,
 }
 
 // parserFunc types are used for Pratt parsing
@@ -103,6 +106,7 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.addInfixFunc(token.LessThan, parser.parseInfixExpression)
 	parser.addInfixFunc(token.GreaterThan, parser.parseInfixExpression)
 	parser.addInfixFunc(token.LeftParenthesis, parser.parseCallExpression)
+	parser.addInfixFunc(token.LeftBracket, parser.parseIndexExpressions)
 
 	return parser
 }
@@ -584,4 +588,25 @@ func (p *Parser) parseExpressionList(bracket token.Type) []syntaxtree.Expr {
 	p.jump()
 
 	return list
+}
+
+func (p *Parser) parseIndexExpressions(left syntaxtree.Expr) syntaxtree.Expr {
+	expr := &syntaxtree.IndexExpression{Token: p.currentToken, Left:  left}
+
+	// move to the index itself
+	p.jump()
+
+	// parse the index
+	expr.Index = p.parseExpression(Lowest)
+
+	if p.nextToken.Type != token.RightBracket {
+		msg := generateErrorMsg(p.currentToken.Type, token.RightBracket, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	// jump to the right bracket
+	p.jump()
+
+	return expr
 }
