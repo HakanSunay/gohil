@@ -44,6 +44,12 @@ func Eval(node syntaxtree.Node, environment *object.Environment) object.Object {
 		return &object.String{Value: node.Value}
 	case *syntaxtree.BooleanLiteral:
 		return parseToBooleanInstance(node.Value)
+	case *syntaxtree.ArrayLiteral:
+		elements := evalExpressions(node.Elements, environment)
+		if len(elements) == 1 && isError(elements[0]) {
+			return elements[0]
+		}
+		return &object.Array{Elements: elements}
 	// hil supports 2 prefix operators: ! (excl. Mark / Bang) and - (minus)
 	case *syntaxtree.PrefixExpr:
 		right := Eval(node.Right, environment)
