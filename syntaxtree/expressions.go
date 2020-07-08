@@ -237,3 +237,29 @@ func (c *CallExpr) GetTokenLiteral() string {
 }
 
 func (c *CallExpr) exprNode() {}
+
+type ArrayLiteral struct {
+	Token    token.Token // the '[' token
+	Elements []Expr
+}
+
+func (al *ArrayLiteral) String() string {
+	var builder strings.Builder
+
+	var elements []string
+	for _, el := range al.Elements {
+		elements = append(elements, el.String())
+	}
+
+	builder.WriteString("[")
+	builder.WriteString(strings.Join(elements, ", "))
+	builder.WriteString("]")
+
+	return builder.String()
+}
+
+func (al *ArrayLiteral) GetTokenLiteral() string {
+	return al.Token.Literal
+}
+
+func (al *ArrayLiteral) exprNode() {}

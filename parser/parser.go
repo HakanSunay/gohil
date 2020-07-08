@@ -91,6 +91,7 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.addPrefixFunc(token.If, parser.parseIfExpression)
 	parser.addPrefixFunc(token.Function, parser.parseFunctionLiteral)
 	parser.addPrefixFunc(token.String, parser.parseStringLiteral)
+	parser.addPrefixFunc(token.LeftBracket, parser.parseArrayLiteral)
 
 	// infix funcs
 	parser.addInfixFunc(token.Plus, parser.parseInfixExpression)
@@ -538,4 +539,49 @@ func (p *Parser) parseCallArguments() []syntaxtree.Expr {
 
 func (p *Parser) parseStringLiteral() syntaxtree.Expr {
 	return &syntaxtree.StringLiteral{Token: p.currentToken, Value: p.currentToken.Literal}
+}
+
+func (p *Parser) parseArrayLiteral() syntaxtree.Expr {
+	array := &syntaxtree.ArrayLiteral{Token: p.currentToken}
+	array.Elements = p.parseExpressionList(token.RightBracket)
+	return array
+}
+
+// TODO: merge this with parseCallArguments
+func (p *Parser) parseExpressionList(bracket token.Type) []syntaxtree.Expr {
+	var list []syntaxtree.Expr
+
+	// no elements
+	if p.nextToken.Type == bracket {
+		p.jump()
+		return list
+	}
+
+	// jump to first element
+	p.jump()
+
+	// since every element is an expression, lets parse the first one
+	list = append(list, p.parseExpression(Lowest))
+
+	// similar to parsing function parameters
+	// while there is an element left, keep on parsing them
+	for p.nextToken.Type == token.Comma {
+		// jump to the comma
+		p.jump()
+		// jump to the element
+		p.jump()
+		list = append(list, p.parseExpression(Lowest))
+	}
+
+	// no more comma, the next token must be a right parenthesis
+	if p.nextToken.Type != bracket {
+		msg := generateErrorMsg(p.currentToken.Type, bracket, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	// jump to the right parenthesis
+	p.jump()
+
+	return list
 }

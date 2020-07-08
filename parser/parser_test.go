@@ -565,3 +565,50 @@ func TestStringLiteralExpression(t *testing.T) {
 		t.Errorf("expected literal value %v, but got %v", "hello world", literal.Value)
 	}
 }
+
+func TestParsingArrayLiterals(t *testing.T) {
+	input := "[1, 2 * 2, 3 + 3]"
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	array, ok := stmt.Expression.(*syntaxtree.ArrayLiteral)
+	if !ok {
+		t.Fatalf("expected type syntaxtree.ArrayLiteral, but got %T", stmt.Expression)
+	}
+
+	if len(array.Elements) != 3 {
+		t.Fatalf("expected len of elements was 3, but got %d", len(array.Elements))
+	}
+
+	testIntegerLiteral(t, array.Elements[0], 1)
+
+	firstInfixExpr, ok := array.Elements[1].(*syntaxtree.InfixExpr)
+	if !ok {
+		t.Fatalf("expected type syntaxtree.ArrayLiteral, but got %T", stmt.Expression)
+	}
+	if firstInfixExpr.Operator != "*" {
+		t.Fatalf("expected operator *, but got %v", firstInfixExpr.Operator)
+	} 
+	if firstInfixExpr.Left.String() != "2" {
+		t.Fatalf("expected value 2, but got %v", firstInfixExpr.Left.String())
+	}
+	if firstInfixExpr.Right.String() != "2" {
+		t.Fatalf("expected value 2, but got %v", firstInfixExpr.Right.String())
+	}
+
+	secondInfixExpr, ok := array.Elements[2].(*syntaxtree.InfixExpr)
+	if !ok {
+		t.Fatalf("expected type syntaxtree.ArrayLiteral, but got %T", stmt.Expression)
+	}
+	if secondInfixExpr.Operator != "+" {
+		t.Fatalf("expected operator +, but got %v", secondInfixExpr.Operator)
+	}
+	if secondInfixExpr.Left.String() != "3" {
+		t.Fatalf("expected value 3, but got %v", firstInfixExpr.Left.String())
+	}
+	if secondInfixExpr.Right.String() != "3" {
+		t.Fatalf("expected value 3, but got %v", firstInfixExpr.Right.String())
+	}
+}
