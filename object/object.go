@@ -7,7 +7,10 @@ import (
 	"github.com/HakanSunay/gohil/syntaxtree"
 )
 
-type Type string
+type (
+	BuiltinFunction func(args ...Object) Object
+	Type            string
+)
 
 const (
 	IntegerObject     Type = "Integer"
@@ -17,6 +20,7 @@ const (
 	ErrorObject       Type = "Error"
 	FunctionObject    Type = "Function"
 	StringObject      Type = "String"
+	BuiltinObject     Type = "Builtin"
 )
 
 type Object interface {
@@ -125,4 +129,16 @@ func (s *String) Type() Type {
 
 func (s *String) Inspect() string {
 	return s.Value
+}
+
+type Builtin struct {
+	Fn BuiltinFunction
+}
+
+func (b *Builtin) Type() Type {
+	return BuiltinObject
+}
+
+func (b *Builtin) Inspect() string {
+	return "builtin function"
 }
