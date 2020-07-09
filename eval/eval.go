@@ -87,6 +87,18 @@ func Eval(node syntaxtree.Node, environment *object.Environment) object.Object {
 			Body:       body,
 			Env:        environment,
 		}
+	case *syntaxtree.IndexExpression:
+		left := Eval(node.Left, environment)
+		if isError(left) {
+			return left
+		}
+
+		index := Eval(node.Index, environment)
+		if isError(index) {
+			return index
+		}
+
+		return evalIndexExpression(left, index)
 	}
 
 	return nil
@@ -316,4 +328,31 @@ func unwrapReturnValue(obj object.Object) object.Object {
 		return returnValue.Value
 	}
 	return obj
+}
+
+// evalIndexExpressions handles evaluation logic for all kinds of index operations
+// the main purpose is to switch on parameter types to decide what logic to apply
+func evalIndexExpression(left object.Object, index object.Object) object.Object {
+	switch {
+	// arr[INTEGER]
+	case left.Type() == object.ArrayObject && index.Type() == object.IntegerObject:
+		return evalArrayIndexExpression(left, index)
+	default:
+		return newError("index operator not supported: %s", left.Type())
+	}
+}
+
+func evalArrayIndexExpression(arr object.Object, index object.Object) object.Object {
+	// type assertion wont fail, guaranteed before
+	arrayObject := arr.(*object.Array)
+
+	// TODO: can do some python magic like returning last element if -1 is the index
+	// or some special case if the index value is 999 999 always return the fist element
+	i := index.(*object.Integer).Value
+	max := len(arrayObject.Elements) - 1
+	if i < 0 || i > max {
+		return Null
+	}
+
+	return arrayObject.Elements[i]
 }

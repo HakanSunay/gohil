@@ -16,6 +16,8 @@ var builtins = map[string]*object.Builtin{
 				return &object.Integer{Value: len(arg.Value)}
 			// we can always add a new case here for custom behaviour for certain object.Object :)
 			// make it work for int as well, but what is the LEN of an int? (no one knows, yet :) )
+			case *object.Array:
+				return &object.Integer{Value: len(arg.Elements)}
 			default:
 				return newError("argument of `len` not supported, got %s", args[0].Type())
 			}
