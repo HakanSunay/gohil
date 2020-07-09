@@ -288,3 +288,29 @@ func (ie *IndexExpression) GetTokenLiteral() string {
 }
 
 func (ie *IndexExpression) exprNode() {}
+
+type HashLiteral struct {
+	Token token.Token // the '{' token
+	Pairs map[Expr]Expr
+}
+
+func (hl *HashLiteral) String() string {
+	var builder strings.Builder
+
+	var pairs []string
+	for key, value := range hl.Pairs {
+		pairs = append(pairs, key.String()+":"+value.String())
+	}
+
+	builder.WriteString("{")
+	builder.WriteString(strings.Join(pairs, ", "))
+	builder.WriteString("}")
+
+	return builder.String()
+}
+
+func (hl *HashLiteral) GetTokenLiteral() string {
+	return hl.Token.Literal
+}
+
+func (hl *HashLiteral) exprNode() {}

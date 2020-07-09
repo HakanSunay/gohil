@@ -95,6 +95,7 @@ func NewParser(lxr *lexer.Lexer) *Parser {
 	parser.addPrefixFunc(token.Function, parser.parseFunctionLiteral)
 	parser.addPrefixFunc(token.String, parser.parseStringLiteral)
 	parser.addPrefixFunc(token.LeftBracket, parser.parseArrayLiteral)
+	parser.addPrefixFunc(token.LeftBrace, parser.parseHashLiteral)
 
 	// infix funcs
 	parser.addInfixFunc(token.Plus, parser.parseInfixExpression)
@@ -591,7 +592,7 @@ func (p *Parser) parseExpressionList(bracket token.Type) []syntaxtree.Expr {
 }
 
 func (p *Parser) parseIndexExpressions(left syntaxtree.Expr) syntaxtree.Expr {
-	expr := &syntaxtree.IndexExpression{Token: p.currentToken, Left:  left}
+	expr := &syntaxtree.IndexExpression{Token: p.currentToken, Left: left}
 
 	// move to the index itself
 	p.jump()
@@ -609,4 +610,56 @@ func (p *Parser) parseIndexExpressions(left syntaxtree.Expr) syntaxtree.Expr {
 	p.jump()
 
 	return expr
+}
+
+func (p *Parser) parseHashLiteral() syntaxtree.Expr {
+	hash := &syntaxtree.HashLiteral{
+		Token: p.currentToken,
+		Pairs: make(map[syntaxtree.Expr]syntaxtree.Expr),
+	}
+
+	// while there are pairs to read, every iteration reads 1 pair
+	for p.nextToken.Type != token.RightBrace {
+		// jump to the next token to read, presumably key
+		p.jump()
+		key := p.parseExpression(Lowest)
+
+		// expecting colon after every key
+		if p.nextToken.Type != token.Colon {
+			msg := generateErrorMsg(p.currentToken.Type, token.Colon, p.nextToken.Type)
+			p.errors = append(p.errors, msg)
+			return nil
+		}
+		// jump to the colon
+		p.jump()
+
+		// jump to the value
+		p.jump()
+		value := p.parseExpression(Lowest)
+		hash.Pairs[key] = value
+
+		if p.nextToken.Type != token.RightBrace && p.nextToken.Type != token.Comma {
+			// if it is not a right brace, it should be a comma next
+			msg := generateErrorMsg(p.currentToken.Type, token.Comma, p.nextToken.Type)
+			p.errors = append(p.errors, msg)
+			return nil
+		}
+
+		// we hit comma as next token, so let's move to it
+		// we are not moving to the right brace, because we will loop the EOF token which breaks the flow
+		if p.nextToken.Type == token.Comma {
+			p.jump()
+		}
+	}
+
+	// since we have processed all of the key pairs, the last token must be a right brace
+	if p.nextToken.Type != token.RightBrace {
+		msg := generateErrorMsg(p.currentToken.Type, token.RightBrace, p.nextToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	// jump to the right brace
+	p.jump()
+
+	return hash
 }

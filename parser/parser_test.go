@@ -654,3 +654,152 @@ func TestParsingIndexExpressions(t *testing.T) {
 		t.Fatalf("expected value 2, but got %v", infixExpr.Right.String())
 	}
 }
+
+func TestParsingHashLiteralsStringKeys(t *testing.T) {
+	input := `{"one": 1, "two": 2, "three": 3}`
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	stmt := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	hash, ok := stmt.Expression.(*syntaxtree.HashLiteral)
+	if !ok {
+		t.Fatalf("expected HashLiteral, but got %T", stmt.Expression)
+	}
+	if len(hash.Pairs) != 3 {
+		t.Errorf("hash.Pairs expected to contain 3 pairs, but got %d", len(hash.Pairs))
+	}
+
+	expected := map[string]int{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+
+	for key, value := range hash.Pairs {
+		literal, ok := key.(*syntaxtree.StringLiteral)
+		if !ok {
+			t.Errorf("expected pair key to StringLiteral, but got %T", key)
+		}
+
+		expectedValue := expected[literal.String()]
+		testIntegerLiteral(t, value, expectedValue)
+	}
+}
+
+func TestParsingEmptyHashLiteral(t *testing.T) {
+	input := "{}"
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	stmt := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	hash, ok := stmt.Expression.(*syntaxtree.HashLiteral)
+	if !ok {
+		t.Fatalf("expected HashLiteral, but got %T", stmt.Expression)
+	}
+	if len(hash.Pairs) != 0 {
+		t.Errorf("hash.Pairs expected to contain 0 pairs, but got %d", len(hash.Pairs))
+	}
+}
+
+func TestParsingHashLiteralsIntegerKeys(t *testing.T) {
+	input := `{1: 1, 2: 2, 3: 3}`
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	stmt := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	hash, ok := stmt.Expression.(*syntaxtree.HashLiteral)
+	if !ok {
+		t.Fatalf("expected HashLiteral, but got %T", stmt.Expression)
+	}
+	if len(hash.Pairs) != 3 {
+		t.Errorf("hash.Pairs expected to contain 3 pairs, but got %d", len(hash.Pairs))
+	}
+
+	expected := map[int]int{
+		1: 1,
+		2: 2,
+		3: 3,
+	}
+
+	for key, value := range hash.Pairs {
+		literal, ok := key.(*syntaxtree.IntegerLiteral)
+		if !ok {
+			t.Errorf("expected pair key to IntegerLiteral, but got %T", key)
+		}
+
+		expectedValue := expected[literal.Value]
+		testIntegerLiteral(t, value, expectedValue)
+	}
+}
+
+func TestParsingHashLiteralsBooleanKeys(t *testing.T) {
+	input := `{true: 1, false: 2}`
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	stmt := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	hash, ok := stmt.Expression.(*syntaxtree.HashLiteral)
+	if !ok {
+		t.Fatalf("expected HashLiteral, but got %T", stmt.Expression)
+	}
+	if len(hash.Pairs) != 2 {
+		t.Errorf("hash.Pairs expected to contain 2 pairs, but got %d", len(hash.Pairs))
+	}
+
+	expected := map[bool]int{
+		true:  1,
+		false: 2,
+	}
+
+	for key, value := range hash.Pairs {
+		literal, ok := key.(*syntaxtree.BooleanLiteral)
+		if !ok {
+			t.Errorf("expected pair key to BooleanLiteral, but got %T", key)
+		}
+
+		expectedValue := expected[literal.Value]
+		testIntegerLiteral(t, value, expectedValue)
+	}
+}
+
+func TestParsingHashLiteralsWithExpressions(t *testing.T) {
+	input := `{"one": 0 + 1}`
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	stmt := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	hash, ok := stmt.Expression.(*syntaxtree.HashLiteral)
+	if !ok {
+		t.Fatalf("expected HashLiteral, but got %T", stmt.Expression)
+	}
+	if len(hash.Pairs) != 1 {
+		t.Errorf("hash.Pairs expected to contain 1 pair, but got %d", len(hash.Pairs))
+	}
+
+	// this loop is not necessary for a single test
+	for key, v := range hash.Pairs {
+		_, ok := key.(*syntaxtree.StringLiteral)
+		if !ok {
+			t.Errorf("key is not a StringLiteral, got %T", key)
+			continue
+		}
+		infixExpr, ok := v.(*syntaxtree.InfixExpr)
+		if !ok {
+			t.Fatalf("expected type syntaxtree.InfixExpr, but got %T", stmt.Expression)
+		}
+		if infixExpr.Operator != "+" {
+			t.Fatalf("expected operator +, but got %v", infixExpr.Operator)
+		}
+		if infixExpr.Left.String() != "0" {
+			t.Fatalf("expected value 0, but got %v", infixExpr.Left.String())
+		}
+		if infixExpr.Right.String() != "1" {
+			t.Fatalf("expected value 1, but got %v", infixExpr.Right.String())
+		}
+	}
+}
