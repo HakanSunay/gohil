@@ -578,6 +578,9 @@ func TestParsingArrayLiterals(t *testing.T) {
 	program := p.ParseProgram()
 
 	stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	if !ok {
+		t.Fatalf("stmt is not syntaxtree.ExpressionStatement. got=%T", program.Statements[0])
+	}
 	array, ok := stmt.Expression.(*syntaxtree.ArrayLiteral)
 	if !ok {
 		t.Fatalf("expected type syntaxtree.ArrayLiteral, but got %T", stmt.Expression)
@@ -625,6 +628,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 	program := p.ParseProgram()
 
 	stmt, ok := program.Statements[0].(*syntaxtree.ExpressionStmt)
+	if !ok {
+		t.Fatalf("stmt is not syntaxtree.ExpressionStatement. got=%T", program.Statements[0])
+	}
 	indexExp, ok := stmt.Expression.(*syntaxtree.IndexExpression)
 	if !ok {
 		t.Fatalf("expected type IndexExpression, but got %T", stmt.Expression)
