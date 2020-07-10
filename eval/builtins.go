@@ -1,6 +1,10 @@
 package eval
 
-import "github.com/HakanSunay/gohil/object"
+import (
+	"fmt"
+
+	"github.com/HakanSunay/gohil/object"
+)
 
 var builtins = map[string]*object.Builtin{
 	"len": {
@@ -107,6 +111,22 @@ var builtins = map[string]*object.Builtin{
 			newElements[length] = args[1]
 
 			return &object.Array{Elements: newElements}
+		},
+	},
+	"print": {
+		Fn: func(args ...object.Object) object.Object {
+			for _, a := range args {
+				// This is given the fact that STDOUT is used,
+				// if in any scenario we want to do it any other way around
+				// we can also create a object.String with a string builder
+				// and after the loop assigning the builder value to a object.String
+				// but that could mean that the object can be used somewhere else
+
+				// but print is all about printing to stdout and not producing values!!!
+				fmt.Println(a.Inspect())
+			}
+
+			return Null
 		},
 	},
 }
