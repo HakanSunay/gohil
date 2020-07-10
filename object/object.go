@@ -23,11 +23,16 @@ const (
 	StringObject      Type = "String"
 	BuiltinObject     Type = "Builtin"
 	ArrayObject       Type = "Array"
+	HashObject        Type = "Hash"
 )
 
 type Object interface {
 	Type() Type
 	Inspect() string // String repr
+}
+
+type Hashable interface {
+	HashKey() HashKey
 }
 
 type Integer struct {
@@ -201,4 +206,29 @@ func (ao *Array) Inspect() string {
 type HashKey struct {
 	Type  Type
 	Value uint64
+}
+
+type HashPair struct {
+	Key   Object
+	Value Object
+}
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (h *Hash) Type() Type { return HashObject }
+
+func (h *Hash) Inspect() string {
+	var builder strings.Builder
+
+	var pairs []string
+	for _, pair := range h.Pairs {
+		pairs = append(pairs, fmt.Sprintf("%s: %s", pair.Key.Inspect(), pair.Value.Inspect()))
+	}
+
+	builder.WriteString("{")
+	builder.WriteString(strings.Join(pairs, ", "))
+	builder.WriteString("}")
+
+	return builder.String()
 }

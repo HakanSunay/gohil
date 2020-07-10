@@ -50,6 +50,8 @@ func Eval(node syntaxtree.Node, environment *object.Environment) object.Object {
 			return elements[0]
 		}
 		return &object.Array{Elements: elements}
+	case *syntaxtree.HashLiteral:
+		return evalHashLiteral(node, environment)
 	// hil supports 2 prefix operators: ! (excl. Mark / Bang) and - (minus)
 	case *syntaxtree.PrefixExpr:
 		right := Eval(node.Right, environment)
@@ -355,4 +357,35 @@ func evalArrayIndexExpression(arr object.Object, index object.Object) object.Obj
 	}
 
 	return arrayObject.Elements[i]
+}
+
+func evalHashLiteral(node *syntaxtree.HashLiteral, environment *object.Environment) object.Object {
+	pairs := make(map[object.HashKey]object.HashPair)
+	for keyNode, valueNode := range node.Pairs {
+		// evaluate the key
+		key := Eval(keyNode, environment)
+		if isError(key) {
+			return key
+		}
+
+		// verify it is hashable
+		hashKey, ok := key.(object.Hashable)
+		if !ok {
+			return newError("unusable as hash key: %s", key.Type())
+		}
+
+		// evaluate the value
+		value := Eval(valueNode, environment)
+		if isError(value) {
+			return value
+		}
+
+		// get the hash of the key
+		hashed := hashKey.HashKey()
+
+		// add to pairs map as HashPair object
+		pairs[hashed] = object.HashPair{Key: key, Value: value}
+	}
+
+	return &object.Hash{Pairs: pairs}
 }

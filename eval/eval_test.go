@@ -318,7 +318,7 @@ func TestArrayLiterals(t *testing.T) {
 
 func TestArrayIndexExpressions(t *testing.T) {
 	tests := []struct {
-		input string
+		input    string
 		expected interface{}
 	}{
 		{
@@ -370,6 +370,38 @@ func TestArrayIndexExpressions(t *testing.T) {
 		} else {
 			verifyNullObject(t, evaluated)
 		}
+	}
+}
+
+func TestHashLiterals(t *testing.T) {
+	// testing string, identifier, string, string, boolean, boolean as keys
+	input := `let two = "two";{"one": 10 - 9, two: 1 + 1, "thr" + "ee": 6 / 2, 4: 4, true: 5, false: 6}`
+	evaluated := evaluate(input)
+
+	result, ok := evaluated.(*object.Hash)
+	if !ok {
+		t.Fatalf("expected type was Hash, but got %T", evaluated)
+	}
+
+	expected := map[object.HashKey]int{
+		(&object.String{Value: "one"}).HashKey():   1,
+		(&object.String{Value: "two"}).HashKey():   2,
+		(&object.String{Value: "three"}).HashKey(): 3,
+		(&object.Integer{Value: 4}).HashKey():      4,
+		True.HashKey():                             5,
+		False.HashKey():                            6,
+	}
+
+	if len(result.Pairs) != len(expected) {
+		t.Fatalf("Hash count of params expected %d, but got %d", len(expected), len(result.Pairs))
+	}
+
+	for expectedKey, expectedValue := range expected {
+		pair, ok := result.Pairs[expectedKey]
+		if !ok {
+			t.Errorf("no pair for given key in Pairs")
+		}
+		verifyIntegerObj(t, pair.Value, expectedValue)
 	}
 }
 
