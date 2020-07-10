@@ -2,6 +2,7 @@ package object
 
 import (
 	"fmt"
+	"hash/fnv"
 	"strings"
 
 	"github.com/HakanSunay/gohil/syntaxtree"
@@ -41,6 +42,14 @@ func (i *Integer) Inspect() string {
 	return fmt.Sprintf("%d", i.Value)
 }
 
+// HashKey is used when we are using Boolean objects as keys for Hash Objects
+func (i *Integer) HashKey() HashKey {
+	// No need to guard for 0 and 1, since they are also used in Boolean.
+	// because when we are looking for the exact key hash, we will also use Type,
+	// therefore (Type & HashKey) are always equal
+	return HashKey{Type: i.Type(), Value: uint64(i.Value)}
+}
+
 type Boolean struct {
 	Value bool
 }
@@ -51,6 +60,17 @@ func (b *Boolean) Type() Type {
 
 func (b *Boolean) Inspect() string {
 	return fmt.Sprintf("%t", b.Value)
+}
+
+// HashKey is used when we are using Boolean objects as keys for Hash Objects
+func (b *Boolean) HashKey() HashKey {
+	var hashValue uint64
+
+	if b.Value {
+		hashValue = 1
+	}
+
+	return HashKey{Type: b.Type(), Value: hashValue}
 }
 
 // Null references were introduced to the ALGOL W language in 1965
@@ -132,6 +152,17 @@ func (s *String) Inspect() string {
 	return s.Value
 }
 
+// HashKey is used when we are using String objects as keys for Hash Objects
+func (s *String) HashKey() HashKey {
+	hash64 := fnv.New64()
+	_, err := hash64.Write([]byte(s.Value))
+	if err != nil {
+		return HashKey{}
+	}
+
+	return HashKey{Type: s.Type(), Value: hash64.Sum64()}
+}
+
 type Builtin struct {
 	Fn BuiltinFunction
 }
@@ -165,4 +196,9 @@ func (ao *Array) Inspect() string {
 	builder.WriteString("]")
 
 	return builder.String()
+}
+
+type HashKey struct {
+	Type  Type
+	Value uint64
 }
