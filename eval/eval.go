@@ -339,9 +339,30 @@ func evalIndexExpression(left object.Object, index object.Object) object.Object 
 	// arr[INTEGER]
 	case left.Type() == object.ArrayObject && index.Type() == object.IntegerObject:
 		return evalArrayIndexExpression(left, index)
+	case left.Type() == object.HashObject:
+		return evalHashIndexExpression(left, index)
 	default:
 		return newError("index operator not supported: %s", left.Type())
 	}
+}
+
+func evalHashIndexExpression(hash object.Object, index object.Object) object.Object {
+	// already verified
+	hashObject := hash.(*object.Hash)
+
+	// only string, bool, integer implement hashable
+	// eg: Function type as index will fail
+	key, ok := index.(object.Hashable)
+	if !ok {
+		return newError("unusable as hash key: %s", index.Type())
+	}
+
+	pair, ok := hashObject.Pairs[key.HashKey()]
+	if !ok {
+		return Null
+	}
+
+	return pair.Value
 }
 
 func evalArrayIndexExpression(arr object.Object, index object.Object) object.Object {
