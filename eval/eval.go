@@ -231,14 +231,31 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 }
 
 func evalStringInfixExpression(operator string, left object.Object, right object.Object) object.Object {
-	if operator != "+" {
+	switch operator {
+	case "+":
+		leftVal := left.(*object.String).Value
+		rightVal := right.(*object.String).Value
+
+		return &object.String{Value: leftVal + rightVal}
+	case "==":
+		leftVal := left.(*object.String).Value
+		rightVal := right.(*object.String).Value
+
+		if leftVal == rightVal {
+			return True
+		}
+		return False
+	case "!=":
+		leftVal := left.(*object.String).Value
+		rightVal := right.(*object.String).Value
+
+		if leftVal == rightVal {
+			return False
+		}
+		return True
+	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
-
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.String).Value
-
-	return &object.String{Value: leftVal + rightVal}
 }
 
 func evalBooleanInfixExpression(operator string, left object.Object, right object.Object) object.Object {
